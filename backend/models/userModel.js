@@ -1,7 +1,12 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema(
   {
+    sponsor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
     firstName: {
       type: String,
       required: true,

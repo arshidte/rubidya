@@ -17,6 +17,9 @@ function generateOTP() {
 
 // Register User
 export const registerUser = asyncHandler(async (req, res) => {
+
+  const userId = req.user._id;
+
   const { firstName, lastName, phone, countryCode, email, password } = req.body;
 
   if (!firstName || !phone || !countryCode || !email || !password) {
@@ -24,7 +27,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     throw new Error("Please enter all the required fields");
   }
 
-  const user = db.users.find({
+  const user = await User.findOne({
     $or: [{ email }, { phone }],
   });
 
@@ -42,8 +45,78 @@ export const registerUser = asyncHandler(async (req, res) => {
         // sendMail(email, OTP);
       }
     }
-    
+
     const createUser = await User.create({
+      sponsor: userId,
+      firstName,
+      lastName,
+      countryCode,
+      phone,
+      email,
+      password,
+      ownSponsorId,
+    });
+
+    if (createUser) {
+      const token = jwt.sign(
+        { userId: createUser._id },
+        "secret_of_jwt_for_rubidya_5959",
+        {
+          expiresIn: "800d",
+        }
+      );
+
+      res.status(201).json({
+        sponsor: createUser.sponsor,
+        firstName: createUser.firstName,
+        lastName: createUser.lastName,
+        phone: createUser.phone,
+        email: createUser.email,
+        token_type: "Bearer",
+        access_token: token,
+        sts: "01",
+        msg: "Success",
+      });
+
+    } else {
+      res.status(400);
+      throw new Error("Invalid user data");
+    }
+  }
+  
+});
+
+// Register User By Referral
+export const registerUserByReferral = asyncHandler(async (req, res) => {
+
+  const { firstName, lastName, phone, countryCode, email, password, userId } = req.body;
+
+  if (!firstName || !phone || !countryCode || !email || !password) {
+    res.status(400);
+    throw new Error("Please enter all the required fields");
+  }
+
+  const user = await User.findOne({
+    $or: [{ email }, { phone }],
+  });
+
+  if (user) {
+    res.status(400);
+    throw new Error("User already exists");
+  } else {
+    const ownSponsorId = generateRandomString();
+
+    if (countryCode) {
+      if (countryCode == +91) {
+        // Send OTP message
+      } else {
+        const OTP = generateOTP();
+        // sendMail(email, OTP);
+      }
+    }
+
+    const createUser = await User.create({
+      sponsor: userId,
       firstName,
       lastName,
       countryCode,
@@ -72,11 +145,13 @@ export const registerUser = asyncHandler(async (req, res) => {
         sts: "01",
         msg: "Success",
       });
+
     } else {
       res.status(400);
       throw new Error("Invalid user data");
     }
   }
+  
 });
 
 // Login user
@@ -88,24 +163,25 @@ export const loginUser = asyncHandler(async (req, res) => {
   if (user && (await user.matchPassword(password))) {
     const token = jwt.sign(
       { userId: user._id },
-      "secret_of_jwt_for_sevensquare_5959",
+      "secret_of_jwt_for_rubidya_5959",
       {
-        expiresIn: "365d",
+        expiresIn: "800d",
       }
     );
 
     res.status(200).json({
       _id: user._id,
       sponser: user.sponser,
-      name: user.name,
+      firstName: user.firstName,
+      lastName: user.lastName,
       email: user.email,
       phone: user.phone,
       isAdmin: user.isAdmin,
-      ownSponserId: user.ownSponserId,
-      earning: user.earning,
+      ownSponsorId: user.ownSponsorId,
       token_type: "Bearer",
       access_token: token,
     });
+
   } else {
     res.status(401).json({ sts: "00", msg: "Login failed" });
   }
