@@ -1,6 +1,20 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
+const transactionSchema = new mongoose.Schema(
+  {
+    amount: Number,
+    kind: String,
+    fromWhom: String,
+    level: String,
+    percentage: Number,
+    status: String,
+  },
+  {
+    timestamps: true,
+  }
+);
+
 const userSchema = new mongoose.Schema(
   {
     sponsor: {
@@ -13,6 +27,10 @@ const userSchema = new mongoose.Schema(
     },
     lastName: {
       type: String,
+      required: true,
+    },
+    countryCode: {
+      type: Number,
       required: true,
     },
     phone: {
@@ -31,6 +49,25 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    photoAddress: [
+      {
+        type: String,
+      },
+    ],
+    videoAddress: [
+      {
+        type: String,
+      },
+    ],
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    walletAmount: {
+      type: Number,
+      default: 0,
+    },
+    transactions: [transactionSchema],
   },
   {
     timestamps: true,

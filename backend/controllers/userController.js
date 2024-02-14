@@ -3,6 +3,8 @@ import User from "../models/userModel.js";
 import jwt from "jsonwebtoken";
 import sendMail from "../config/nodeMailer.js";
 
+import Level from "../models/levelModel.js";
+
 const generateRandomString = () => {
   const baseString = "RBD";
   const randomDigits = Math.floor(Math.random() * 999999);
@@ -17,7 +19,6 @@ function generateOTP() {
 
 // Register User
 export const registerUser = asyncHandler(async (req, res) => {
-
   const userId = req.user._id;
 
   const { firstName, lastName, phone, countryCode, email, password } = req.body;
@@ -77,19 +78,17 @@ export const registerUser = asyncHandler(async (req, res) => {
         sts: "01",
         msg: "Success",
       });
-
     } else {
       res.status(400);
       throw new Error("Invalid user data");
     }
   }
-  
 });
 
 // Register User By Referral
 export const registerUserByReferral = asyncHandler(async (req, res) => {
-
-  const { firstName, lastName, phone, countryCode, email, password, userId } = req.body;
+  const { firstName, lastName, phone, countryCode, email, password, userId } =
+    req.body;
 
   if (!firstName || !phone || !countryCode || !email || !password) {
     res.status(400);
@@ -145,13 +144,11 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
         sts: "01",
         msg: "Success",
       });
-
     } else {
       res.status(400);
       throw new Error("Invalid user data");
     }
   }
-  
 });
 
 // Login user
@@ -181,8 +178,73 @@ export const loginUser = asyncHandler(async (req, res) => {
       token_type: "Bearer",
       access_token: token,
     });
-
   } else {
     res.status(401).json({ sts: "00", msg: "Login failed" });
   }
 });
+
+
+// Verify user (Call this after the user successfully did the payment)
+const splitCommissions = async (user, amount, levels, percentages) => {
+  if (!user || levels === 11) {
+    return;
+  }
+
+  const commission = (percentages[0] / 100) * amount;
+  const sponsor = await User.findById(user.sponsor);
+
+  if (sponsor) {
+    sponsor.earning = Math.round((sponsor.earning + commission) * 10) / 10;
+
+    sponsor.transactions.push({
+      amount: commission,
+      kind: "Level commission",
+      fromWhom: user.name,
+      level: levels,
+      percentage: percentages[0],
+      status: "approved",
+    });
+
+    await sponsor.save();
+    splitCommissions(sponsor, amount, levels + 1, percentages.slice(1));
+  } else {
+    return;
+  }
+};
+
+export const verifyUser = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const { amount } = req.body;
+
+  if (!amount) {
+    res.status(400);
+    throw new Error("Please send the amount");
+  }
+
+  const user = await User.findById(userId);
+
+  if (user) {
+    if (user.isVerified) {
+      res.status(400);
+      throw new Error("User already verified!");
+    }
+
+    user.isVerified = true;
+    const level = await Level.findOne();
+
+    await splitCommissions(user, amount, 1, level.levelPercentages);
+
+    const updatedUser = await user.save();
+
+    if (updatedUser) {
+      res.status(200).json({ sts: "01", msg: "User verified successfully" });
+    } else {
+      res.status(400).json({ sts: "00", msg: "User not verified" });
+    }
+  } else {
+    res.status(404).json({ sts: "00", msg: "User not found" });
+  }
+});
+
+// Move wallet amount to the Rubideum wallet
