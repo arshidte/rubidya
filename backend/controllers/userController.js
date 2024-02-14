@@ -19,6 +19,7 @@ function generateOTP() {
 
 // Register User
 export const registerUser = asyncHandler(async (req, res) => {
+
   const userId = req.user._id;
 
   const { firstName, lastName, phone, countryCode, email, password } = req.body;
@@ -87,6 +88,7 @@ export const registerUser = asyncHandler(async (req, res) => {
 
 // Register User By Referral
 export const registerUserByReferral = asyncHandler(async (req, res) => {
+
   const { firstName, lastName, phone, countryCode, email, password, userId } =
     req.body;
 
@@ -115,7 +117,7 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
     }
 
     const createUser = await User.create({
-      sponsor: userId,
+      sponsor: userId || null,
       firstName,
       lastName,
       countryCode,
