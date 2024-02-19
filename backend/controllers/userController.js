@@ -19,9 +19,7 @@ function generateOTP() {
 
 // Register User
 export const registerUser = asyncHandler(async (req, res) => {
-
-  const userId = req.user._id;
-
+  
   const { firstName, lastName, phone, countryCode, email, password } = req.body;
 
   if (!firstName || !phone || !countryCode || !email || !password) {
@@ -49,7 +47,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     }
 
     const createUser = await User.create({
-      sponsor: userId,
+      sponsor: null,
       firstName,
       lastName,
       countryCode,
@@ -73,6 +71,7 @@ export const registerUser = asyncHandler(async (req, res) => {
         firstName: createUser.firstName,
         lastName: createUser.lastName,
         phone: createUser.phone,
+        countryCode: createUser.countryCode,
         email: createUser.email,
         token_type: "Bearer",
         access_token: token,
@@ -88,7 +87,6 @@ export const registerUser = asyncHandler(async (req, res) => {
 
 // Register User By Referral
 export const registerUserByReferral = asyncHandler(async (req, res) => {
-
   const { firstName, lastName, phone, countryCode, email, password, userId } =
     req.body;
 
@@ -179,12 +177,13 @@ export const loginUser = asyncHandler(async (req, res) => {
       ownSponsorId: user.ownSponsorId,
       token_type: "Bearer",
       access_token: token,
+      sts: "01",
+      msg: "Success",
     });
   } else {
     res.status(401).json({ sts: "00", msg: "Login failed" });
   }
 });
-
 
 // Verify user (Call this after the user successfully did the payment)
 const splitCommissions = async (user, amount, levels, percentages) => {
