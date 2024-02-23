@@ -4,6 +4,8 @@ import jwt from "jsonwebtoken";
 
 import Level from "../models/levelModel.js";
 import Media from "../models/mediaModel.js";
+import sharp from "sharp";
+import { resizeImage } from "../config/resizeImage.js";
 
 const generateRandomString = () => {
   const baseString = "RBD";
@@ -261,16 +263,26 @@ export const verifyUser = asyncHandler(async (req, res) => {
 // Upload Image
 
 export const uploadImage = asyncHandler(async (req, res) => {
-  
   if (!req.file) {
     res.status(400).json({ sts: "00", msg: "No file uploaded" });
   }
 
-  const filePath = req.file.path;
-  const fileType = req.file.mimetype;
-  const fileName = req.file.fileName;
+  const { path: filePath, mimetype: fileType, filename: fileName } = req.file;
+  console.log(fileName);
 
   const userId = req.user._id;
+
+  // Resize image
+  const percentage = 25;
+  const metadata = await sharp(filePath).metadata();
+  const newWidth = Math.round(metadata.width * (percentage / 100));
+  const newHeight = Math.round(metadata.height * (percentage / 100));
+  await sharp(filePath)
+    .resize({ width: newWidth, height: newHeight })
+    .toFormat("jpeg")
+    .jpeg({ quality: 80 })
+    .toFile("uploads/compressed-" + fileName);
+  // Resize image
 
   const media = new Media({
     userId,
