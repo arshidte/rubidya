@@ -4,12 +4,13 @@ import { TypedUseSelectorHook, useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux';
 
 import authReducer from './authSlice';
-import { getAllUsersReducer } from './adminSlice';
+import { getAllUsersReducer, addPercentagesReducer } from './adminSlice';
 
 const rootReducer = combineReducers({
     themeConfig: themeConfigSlice,
     authReducer,
     getAllUsers: getAllUsersReducer,
+    addPercentages: addPercentagesReducer,
 });
 
 const store = configureStore({

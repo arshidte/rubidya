@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 import AllMembers from '../pages/DataTables/AllMembers';
+import LevelConfig from '../pages/LevelConfig';
 const IndexSales = lazy(() => import('../pages/Indexsales'));
 const Index = lazy(() => import('../pages/Index'));
 const Analytics = lazy(() => import('../pages/Analytics'));
@@ -116,6 +117,10 @@ const routes = [
         path: '/login',
         element: <LoginBoxed />,
         layout: 'blank',
+    },
+    {
+        path: '/level-configs',
+        element: <LevelConfig />,
     },
     // analytics page
     {

@@ -1,19 +1,6 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
-const transactionSchema = new mongoose.Schema(
-  {
-    amount: Number,
-    kind: String,
-    fromWhom: String,
-    level: String,
-    percentage: Number,
-    status: String,
-  },
-  {
-    timestamps: true,
-  }
-);
 
 const userSchema = new mongoose.Schema(
   {
@@ -67,7 +54,16 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    transactions: [transactionSchema],
+    transactions: [
+      {
+        amount: Number,
+        kind: String,
+        fromWhom: String,
+        level: String,
+        percentage: Number,
+        status: String,
+      },
+    ],
   },
   {
     timestamps: true,

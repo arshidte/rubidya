@@ -37,5 +37,4 @@ export const addLevelPercentages = asyncHandler(async (req, res) => {
       message: "Level percentages not added",
     });
   }
-
 });

@@ -4,7 +4,8 @@ const levelSchema = new mongoose.Schema(
   {
     levelPercentages: [
       {
-        type: Number,
+        level: { type: String, required: true },
+        percentage: { type: Number, required: true },
       },
     ],
   },

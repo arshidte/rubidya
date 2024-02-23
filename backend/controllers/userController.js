@@ -1,9 +1,9 @@
 import asyncHandler from "../middleware/asyncHandler.js";
 import User from "../models/userModel.js";
 import jwt from "jsonwebtoken";
-import sendMail from "../config/nodeMailer.js";
 
 import Level from "../models/levelModel.js";
+import Media from "../models/mediaModel.js";
 
 const generateRandomString = () => {
   const baseString = "RBD";
@@ -19,7 +19,6 @@ function generateOTP() {
 
 // Register User
 export const registerUser = asyncHandler(async (req, res) => {
-  
   const { firstName, lastName, phone, countryCode, email, password } = req.body;
 
   if (!firstName || !phone || !countryCode || !email || !password) {
@@ -55,6 +54,7 @@ export const registerUser = asyncHandler(async (req, res) => {
       email,
       password,
       ownSponsorId,
+      transactions: [],
     });
 
     if (createUser) {
@@ -123,6 +123,7 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
       email,
       password,
       ownSponsorId,
+      transactions: [],
     });
 
     if (createUser) {
@@ -168,7 +169,7 @@ export const loginUser = asyncHandler(async (req, res) => {
 
     res.status(200).json({
       _id: user._id,
-      sponser: user.sponser,
+      sponsor: user.sponsor,
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
@@ -187,7 +188,7 @@ export const loginUser = asyncHandler(async (req, res) => {
 
 // Verify user (Call this after the user successfully did the payment)
 const splitCommissions = async (user, amount, levels, percentages) => {
-  if (!user || levels === 11) {
+  if (!user || levels === 0) {
     return;
   }
 
@@ -195,7 +196,10 @@ const splitCommissions = async (user, amount, levels, percentages) => {
   const sponsor = await User.findById(user.sponsor);
 
   if (sponsor) {
-    sponsor.earning = Math.round((sponsor.earning + commission) * 10) / 10;
+    const walletAmount =
+      Math.round((sponsor.walletAmount + commission) * 10) / 10;
+
+    sponsor.walletAmount = walletAmount;
 
     sponsor.transactions.push({
       amount: commission,
@@ -207,7 +211,7 @@ const splitCommissions = async (user, amount, levels, percentages) => {
     });
 
     await sponsor.save();
-    splitCommissions(sponsor, amount, levels + 1, percentages.slice(1));
+    splitCommissions(sponsor, amount, levels - 1, percentages.slice(1));
   } else {
     return;
   }
@@ -234,7 +238,13 @@ export const verifyUser = asyncHandler(async (req, res) => {
     user.isVerified = true;
     const level = await Level.findOne();
 
-    await splitCommissions(user, amount, 1, level.levelPercentages);
+    const percentageArray = level.levelPercentages;
+    const percentages = [];
+    percentageArray.map((item) => {
+      percentages.push(item.percentage);
+    });
+
+    await splitCommissions(user, amount, percentages.length, percentages);
 
     const updatedUser = await user.save();
 
@@ -248,4 +258,30 @@ export const verifyUser = asyncHandler(async (req, res) => {
   }
 });
 
-// Move wallet amount to the Rubideum wallet
+// Upload Image
+
+export const uploadImage = asyncHandler(async (req, res) => {
+  
+  if (!req.file) {
+    res.status(400).json({ sts: "00", msg: "No file uploaded" });
+  }
+
+  const filePath = req.file.path;
+  const fileType = req.file.mimetype;
+  const fileName = req.file.fileName;
+
+  const userId = req.user._id;
+
+  const media = new Media({
+    userId,
+    fileType,
+    fileName,
+    filePath,
+  });
+
+  if (media) {
+    res.status(201).json({ sts: "01", msg: "Image uploaded successfully" });
+  } else {
+    res.status(400).json({ sts: "00", msg: "Error in uploading image" });
+  }
+});
