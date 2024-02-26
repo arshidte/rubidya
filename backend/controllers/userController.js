@@ -5,7 +5,6 @@ import jwt from "jsonwebtoken";
 import Level from "../models/levelModel.js";
 import Media from "../models/mediaModel.js";
 import sharp from "sharp";
-import { resizeImage } from "../config/resizeImage.js";
 
 const generateRandomString = () => {
   const baseString = "RBD";
