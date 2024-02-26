@@ -267,7 +267,6 @@ export const uploadImage = asyncHandler(async (req, res) => {
   }
 
   const { path: filePath, mimetype: fileType, filename: fileName } = req.file;
-  console.log(fileName);
 
   const userId = req.user._id;
 
@@ -280,10 +279,10 @@ export const uploadImage = asyncHandler(async (req, res) => {
     .resize({ width: newWidth, height: newHeight })
     .toFormat("jpeg")
     .jpeg({ quality: 80 })
-    .toFile("uploads/compressed-" + fileName);
+    .toFile("uploads/" + fileName);
   // Resize image
 
-  const media = new Media({
+  const media = await Media.create({
     userId,
     fileType,
     fileName,
@@ -294,5 +293,16 @@ export const uploadImage = asyncHandler(async (req, res) => {
     res.status(201).json({ sts: "01", msg: "Image uploaded successfully" });
   } else {
     res.status(400).json({ sts: "00", msg: "Error in uploading image" });
+  }
+});
+
+// Get all the media uploaded by the user
+export const getMedia = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const media = await Media.findOne({ userId });
+  if (media) {
+    res.status(200).json({ sts: "01", msg: "Success", media });
+  } else {
+    res.status(404).json({ sts: "00", msg: "No media found" });
   }
 });
