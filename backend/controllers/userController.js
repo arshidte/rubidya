@@ -265,21 +265,22 @@ export const uploadImage = asyncHandler(async (req, res) => {
   if (!req.file) {
     res.status(400).json({ sts: "00", msg: "No file uploaded" });
   }
+  
 
   const { path: filePath, mimetype: fileType, filename: fileName } = req.file;
 
   const userId = req.user._id;
 
   // Resize image
-  const percentage = 25;
-  const metadata = await sharp(filePath).metadata();
-  const newWidth = Math.round(metadata.width * (percentage / 100));
-  const newHeight = Math.round(metadata.height * (percentage / 100));
-  await sharp(filePath)
-    .resize({ width: newWidth, height: newHeight })
-    .toFormat("jpeg")
-    .jpeg({ quality: 80 })
-    .toFile("uploads/" + fileName);
+  // const percentage = 25;
+  // const metadata = await sharp(filePath).metadata();
+  // const newWidth = Math.round(metadata.width * (percentage / 100));
+  // const newHeight = Math.round(metadata.height * (percentage / 100));
+  // await sharp(filePath)
+  //   .resize({ width: newWidth, height: newHeight })
+  //   .toFormat("jpeg")
+  //   .jpeg({ quality: 80 })
+  //   .toFile("uploads/comp-" + fileName);
   // Resize image
 
   const media = await Media.create({
@@ -299,7 +300,7 @@ export const uploadImage = asyncHandler(async (req, res) => {
 // Get all the media uploaded by the user
 export const getMedia = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const media = await Media.findOne({ userId });
+  const media = await Media.find({ userId });
   if (media) {
     res.status(200).json({ sts: "01", msg: "Success", media });
   } else {
