@@ -259,29 +259,26 @@ export const verifyUser = asyncHandler(async (req, res) => {
   }
 });
 
-// Upload Image
+// Get user profile
+export const getUserProfile = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const user = await User.findById(userId).select("-password");
+  if (user) {
+    res.status(200).json({ sts: "01", msg: "Success", user });
+  } else {
+    res.status(404).json({ sts: "00", msg: "User not found" });
+  }
+});
 
+// Upload Image
 export const uploadImage = asyncHandler(async (req, res) => {
   if (!req.file) {
     res.status(400).json({ sts: "00", msg: "No file uploaded" });
   }
-  
 
   const { path: filePath, mimetype: fileType, filename: fileName } = req.file;
 
   const userId = req.user._id;
-
-  // Resize image
-  // const percentage = 25;
-  // const metadata = await sharp(filePath).metadata();
-  // const newWidth = Math.round(metadata.width * (percentage / 100));
-  // const newHeight = Math.round(metadata.height * (percentage / 100));
-  // await sharp(filePath)
-  //   .resize({ width: newWidth, height: newHeight })
-  //   .toFormat("jpeg")
-  //   .jpeg({ quality: 80 })
-  //   .toFile("uploads/comp-" + fileName);
-  // Resize image
 
   const media = await Media.create({
     userId,

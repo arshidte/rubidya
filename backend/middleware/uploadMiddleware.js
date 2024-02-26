@@ -62,7 +62,14 @@ export const resizeAndCompressImage = async (req, res, next) => {
     const randomFilename = `${timestamp}-${randomString}${extension}`;
 
     // Write compressed image buffer to disk
-    fs.writeFileSync(`uploads/${randomFilename}`, compressedBuffer);
+    try {
+      fs.writeFileSync(
+        `/var/www/seclob/rubidya/uploads/${randomFilename}`,
+        compressedBuffer
+      );
+    } catch (error) {
+      console.error(error);
+    }
 
     // Add properties to req.file
     req.file.path = `uploads/${randomFilename}`; // Example path

@@ -4,6 +4,7 @@ const router = express.Router();
 import { protect } from "../middleware/authMiddleware.js";
 import {
   getMedia,
+  getUserProfile,
   loginUser,
   registerUser,
   registerUserByReferral,
@@ -14,6 +15,10 @@ import { resizeAndCompressImage, upload } from "../middleware/uploadMiddleware.j
 
 router.route("/").post(protect, registerUser);
 router.route("/add-user-by-refferal").post(registerUserByReferral);
+
+// Get user profile
+router.route("/profile").get(protect, getUserProfile);
+
 router.route("/login").post(loginUser);
 router.route("/verify-user").post(protect, verifyUser);
 // Upload image

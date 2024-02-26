@@ -36,16 +36,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    photoAddress: [
-      {
-        type: String,
-      },
-    ],
-    videoAddress: [
-      {
-        type: String,
-      },
-    ],
     isVerified: {
       type: Boolean,
       default: false,
