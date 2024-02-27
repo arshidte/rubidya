@@ -51,7 +51,6 @@ export const getAllUsersSlice = createSlice({
 
 // Add level percentages
 export const addPercentages = createAsyncThunk('addPercentages', async (levelPercentages: any) => {
-
     const token: any = localStorage.getItem('userInfo');
     const parsedData = JSON.parse(token);
 
@@ -97,5 +96,55 @@ export const addPercentagesSlice = createSlice({
     },
 });
 
+// Get the count of users
+export const getUsersCount = createAsyncThunk('getUsersCount', async () => {
+
+    const token: any = localStorage.getItem('userInfo');
+    const parsedData = JSON.parse(token);
+
+    const config = {
+        headers: {
+            Authorization: `Bearer ${parsedData.access_token}`,
+            'content-type': 'application/json',
+        },
+    };
+
+    const response = await axios.get(`${URL}/api/admin/get-users-count`, config);
+    
+    return response.data;
+
+});
+
+export const getUsersCountSlice = createSlice({
+    name: 'getUsersCountSlice',
+    initialState: {
+        loading: false,
+        data: null,
+        error: '',
+    },
+    reducers: {},
+    extraReducers: (builder) => {
+        builder
+            .addCase(getUsersCount.pending, (state: any) => {
+                state.loading = true;
+            })
+            .addCase(getUsersCount.fulfilled, (state, action) => {
+                state.loading = false;
+                state.data = action.payload;
+            })
+            .addCase(getUsersCount.rejected, (state, action) => {
+                state.loading = false;
+                console.error('Error', action.payload);
+
+                if (action.error.message === 'Request failed with status code 500') {
+                    state.error = 'Please make sure you filled all the above details!';
+                } else if (action.error.message === 'Request failed with status code 400') {
+                    state.error = 'Email or Phone already used!';
+                }
+            });
+    },
+});
+
+export const getUsersCountReducer = getUsersCountSlice.reducer;
 export const addPercentagesReducer = addPercentagesSlice.reducer;
 export const getAllUsersReducer = getAllUsersSlice.reducer;

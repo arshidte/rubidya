@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
-
 const userSchema = new mongoose.Schema(
   {
     sponsor: {
@@ -54,6 +53,12 @@ const userSchema = new mongoose.Schema(
         status: String,
       },
     ],
+    payId: {
+      type: String,
+    },
+    uniqueId: {
+      type: String,
+    },
   },
   {
     timestamps: true,

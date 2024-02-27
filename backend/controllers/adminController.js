@@ -38,3 +38,34 @@ export const addLevelPercentages = asyncHandler(async (req, res) => {
     });
   }
 });
+
+// Get total numbers of users to admin
+export const getUsersCount = asyncHandler(async (req, res) => {
+  // const usersCount = await User.countDocuments({});
+  const usersCount = await User.aggregate([
+    {
+      $group: {
+        _id: "$isVerified",
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  if (usersCount) {
+    let isVerifiedCount = 0;
+    let notVerifiedCount = 0;
+    let totalCount = 0;
+
+    usersCount.forEach((item) => {
+      if (item._id == true) {
+        isVerifiedCount = item.count;
+      } else {
+        notVerifiedCount = item.count;
+      }
+    });
+    totalCount = isVerifiedCount + notVerifiedCount;
+    res.status(200).json({ isVerifiedCount, notVerifiedCount, totalCount });
+  } else {
+    res.status(404).json({ sts: "00", msg: "No users found" });
+  }
+});

@@ -547,16 +547,19 @@ const AllMembers = () => {
 
     useEffect(() => {
         setInitialRecords(() => {
-            return rowData && rowData.filter((item: any) => {
-                return (
-                    item.firstName.toLowerCase().includes(search.toLowerCase()) ||
-                    item.lastName.toLowerCase().includes(search.toLowerCase()) ||
-                    item.email.toLowerCase().includes(search.toLowerCase()) ||
-                    item.country.toLowerCase().includes(search.toLowerCase()) ||
-                    item.isVerified.toString().toLowerCase().includes(search.toLowerCase()) ||
-                    item.phone.toLowerCase().includes(search.toLowerCase())
-                );
-            });
+            return (
+                rowData &&
+                rowData.filter((item: any) => {
+                    return (
+                        item.firstName.toLowerCase().includes(search.toLowerCase()) ||
+                        item.lastName.toLowerCase().includes(search.toLowerCase()) ||
+                        item.email.toLowerCase().includes(search.toLowerCase()) ||
+                        item.country.toLowerCase().includes(search.toLowerCase()) ||
+                        item.isVerified.toString().toLowerCase().includes(search.toLowerCase()) ||
+                        item.phone.toLowerCase().includes(search.toLowerCase())
+                    );
+                })
+            );
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search]);
@@ -748,8 +751,20 @@ const AllMembers = () => {
                             { accessor: 'lastName', sortable: true },
                             { accessor: 'email', sortable: true },
                             { accessor: 'phone', sortable: true },
-                            { accessor: 'country', sortable: true },
-                            { accessor: 'isVerified', sortable: true },
+                            { accessor: 'countryCode', sortable: true },
+                            {
+                                accessor: 'isVerified',
+                                sortable: true,
+                                render: ({ isVerified }) => (
+                                    <div>
+                                        {isVerified ? (
+                                            <div className="bg-green-500 text-white p-1 font-bold rounded w-min text-xs">Verified</div>
+                                        ) : (
+                                            <div className="bg-red-500 text-white p-1 font-bold rounded w-min text-xs">Not Verified</div>
+                                        )}
+                                    </div>
+                                ),
+                            },
                             {
                                 accessor: 'createdAt',
                                 title: 'Joining Date',

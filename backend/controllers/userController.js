@@ -56,6 +56,8 @@ export const registerUser = asyncHandler(async (req, res) => {
       password,
       ownSponsorId,
       transactions: [],
+      payId: "",
+      uniqueId: "",
     });
 
     if (createUser) {
@@ -218,6 +220,7 @@ const splitCommissions = async (user, amount, levels, percentages) => {
   }
 };
 
+// Verify user API
 export const verifyUser = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
@@ -304,3 +307,23 @@ export const getMedia = asyncHandler(async (req, res) => {
     res.status(404).json({ sts: "00", msg: "No media found" });
   }
 });
+
+// Add payId and secret key
+export const addPayId = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const { payId, uniqueId } = req.body;
+
+  if (!payId || !uniqueId) {
+    res.status(400);
+    throw new Error("Please send the payId and uniqueId");
+  }
+
+  const user = await User.findByIdAndUpdate(userId, { payId, uniqueId });
+
+  if (user) {
+    res.status(200).json({ sts: "01", msg: "PayId added successfully" });
+  } else {
+    res.status(404).json({ sts: "00", msg: "User not found" });
+  }
+});
+
