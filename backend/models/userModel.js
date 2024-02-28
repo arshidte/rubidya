@@ -35,7 +35,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    isVerified: {
+    isVerified: { // Verified if the user exist in rubideum wallet
+      type: Boolean,
+      default: false,
+    },
+    isAccountVerified: {
       type: Boolean,
       default: false,
     },
@@ -59,6 +63,15 @@ const userSchema = new mongoose.Schema(
     uniqueId: {
       type: String,
     },
+    profilePic: {
+      type: String,
+    },
+    referrals: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   {
     timestamps: true,

@@ -14,6 +14,10 @@ app.use(express.json());
 connectDB();
 // Database connection
 
+// Uploads directory
+app.use("/uploads", express.static("/var/www/seclob/rubidya/uploads"));
+// Uploads directory
+
 // API routes
 app.get("/", (req, res) => {
   res.status(201).json("Running");

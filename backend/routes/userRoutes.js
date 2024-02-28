@@ -4,9 +4,11 @@ const router = express.Router();
 import { protect } from "../middleware/authMiddleware.js";
 import {
   addPayId,
+  getDirectRefferedUsers,
   getMedia,
   getUserProfile,
   loginUser,
+  refferalTreeCount,
   registerUser,
   registerUserByReferral,
   uploadImage,
@@ -35,5 +37,11 @@ router.route("/get-media").get(protect, getMedia);
 
 // Add PayId
 router.route("/add-pay-id").post(protect, addPayId);
+
+// Get direct reffered users
+router.route("/get-direct-refferals").get(protect, getDirectRefferedUsers);
+
+// Get refferal tree count
+router.route("/get-refferal-tree-count").get(protect, refferalTreeCount);
 
 export default router;

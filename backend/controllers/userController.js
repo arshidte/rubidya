@@ -56,6 +56,7 @@ export const registerUser = asyncHandler(async (req, res) => {
       password,
       ownSponsorId,
       transactions: [],
+      referrals: [],
       payId: "",
       uniqueId: "",
     });
@@ -88,7 +89,7 @@ export const registerUser = asyncHandler(async (req, res) => {
   }
 });
 
-// Register User By Referral
+// Register User By Referral or direct registeration
 export const registerUserByReferral = asyncHandler(async (req, res) => {
   const { firstName, lastName, phone, countryCode, email, password, userId } =
     req.body;
@@ -127,9 +128,14 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
       password,
       ownSponsorId,
       transactions: [],
+      referrals: [],
+      payId: "",
+      uniqueId: "",
     });
 
     if (createUser) {
+      // Access token is necessory as we are using this same API
+      // for both refferal as well as normal registration.
       const token = jwt.sign(
         { userId: createUser._id },
         "secret_of_jwt_for_rubidya_5959",
@@ -138,16 +144,38 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
         }
       );
 
-      res.status(201).json({
-        firstName: createUser.firstName,
-        lastName: createUser.lastName,
-        phone: createUser.phone,
-        email: createUser.email,
-        token_type: "Bearer",
-        access_token: token,
-        sts: "01",
-        msg: "Success",
-      });
+      // Add the new created user to the referred user's referrals
+      if (userId) {
+        const referredUser = await User.findOneAndUpdate(
+          { _id: userId },
+          { $push: { referrals: createUser._id } },
+          { new: true }
+        );
+
+        if (referredUser) {
+          res.status(201).json({
+            firstName: createUser.firstName,
+            lastName: createUser.lastName,
+            phone: createUser.phone,
+            email: createUser.email,
+            token_type: "Bearer",
+            access_token: token,
+            sts: "01",
+            msg: "Success",
+          });
+        }
+      } else {
+        res.status(201).json({
+          firstName: createUser.firstName,
+          lastName: createUser.lastName,
+          phone: createUser.phone,
+          email: createUser.email,
+          token_type: "Bearer",
+          access_token: token,
+          sts: "01",
+          msg: "Success",
+        });
+      }
     } else {
       res.status(400);
       throw new Error("Invalid user data");
@@ -234,12 +262,12 @@ export const verifyUser = asyncHandler(async (req, res) => {
   const user = await User.findById(userId);
 
   if (user) {
-    if (user.isVerified) {
+    if (user.isAccountVerified) {
       res.status(400);
       throw new Error("User already verified!");
     }
 
-    user.isVerified = true;
+    user.isAccountVerified = true;
     const level = await Level.findOne();
 
     const percentageArray = level.levelPercentages;
@@ -322,6 +350,54 @@ export const addPayId = asyncHandler(async (req, res) => {
 
   if (user) {
     res.status(200).json({ sts: "01", msg: "PayId added successfully" });
+  } else {
+    res.status(404).json({ sts: "00", msg: "User not found" });
+  }
+});
+
+// Get the direct reffered users' list
+export const getDirectRefferedUsers = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const user = await User.findById(userId).populate({
+    path: "referrals",
+    select: "firstName lastName email phone isVerified isAccountVerified",
+  });
+
+  if (user) {
+    const referrals = user.referrals;
+    if (referrals) {
+      res.status(200).json({ sts: "01", msg: "Success", referrals });
+    } else {
+      res.status(404).json({ sts: "00", msg: "No referrals found" });
+    }
+  } else {
+    res.status(404).json({ sts: "00", msg: "User not found" });
+  }
+});
+
+// Get the refferal tree users count
+async function getReferralTreeCount(user) {
+  let count = 0;
+
+  const referrals = await User.find({
+    _id: { $in: user.referrals },
+  });
+
+  for (let referral of referrals) {
+    count++;
+    count += await getReferralTreeCount(referral);
+  }
+
+  return count;
+}
+
+export const refferalTreeCount = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const user = await User.findById(userId);
+  if (user) {
+    const count = await getReferralTreeCount(user);
+    res.status(200).json({ sts: "01", msg: "Success", count });
   } else {
     res.status(404).json({ sts: "00", msg: "User not found" });
   }
