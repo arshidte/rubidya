@@ -124,7 +124,7 @@ const routes = [
         element: <LevelConfig />,
     },
     {
-        path: '/register',
+        path: '/register/:userId',
         element: <Register />,
         layout: 'blank',
     },

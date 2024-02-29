@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { IRootState, useAppDispatch, useAppSelector } from '../../store';
 import { setPageTitle, toggleRTL } from '../../store/themeConfigSlice';
@@ -11,6 +11,7 @@ import IconMail from '../../components/Icon/IconMail';
 import IconLockDots from '../../components/Icon/IconLockDots';
 import IconPhone from '../../components/Icon/IconPhone';
 import { count } from 'console';
+import { registerUserByReferral } from '../../store/adminSlice';
 
 const countries = [
     { country: 'Afghanistan', code: '93', iso: 'AF' },
@@ -256,22 +257,25 @@ const countries = [
 ];
 
 const Register = () => {
-    const dispatch = useAppDispatch();
-    const navigate = useNavigate();
 
-    const [userName, setFirstName] = useState('');
+    const { userId } = useParams();
+
+    const dispatch = useAppDispatch();
+
+    const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
+    const [mobile, setMobile] = useState('');
+    const [countryCode, setCountryCode] = useState('');
+    const [reEnterPassword, setReEnterPassword] = useState('');
     const [password, setPassword] = useState('');
     const [showPass, setShowPass] = useState(false);
-    const [reEnterPassword, setReEnterPassword] = useState('');
 
-    const { loading, data: userData, error } = useAppSelector((state: any) => state.addNewUserReducer);
-    const { userInfo } = useAppSelector((state: any) => state.authReducer);
+    const { data: userData } = useAppSelector((state: any) => state.registerByReferral);
 
     useEffect(() => {
         dispatch(setPageTitle('Register new member'));
-    }, [userInfo]);
+    }, []);
 
     // Reset user data and error state after successful submission
     useEffect(() => {
@@ -279,26 +283,25 @@ const Register = () => {
             setFirstName('');
             setLastName('');
             setEmail('');
+            setMobile('');
             setPassword('');
             setReEnterPassword('');
+
+            alert('Registration successful');
         }
     }, [userData]);
 
-    // Redirect to signin page if user is not logged in
-    useEffect(() => {
-        if (!userInfo) {
-            navigate('/signin');
-        }
-    }, [userInfo]);
-
     const submitForm = (e: any) => {
         e.preventDefault();
-        const data = { userName, email, password };
+        const data = { userId, firstName, lastName, email, countryCode, mobile, password };
         if (password !== reEnterPassword) {
             alert('Passwords do not match');
             return;
+        } else if (!firstName || !lastName || !email || !countryCode || !mobile || !password) {
+            alert('Fill all fields');
+            return;
         } else {
-            // dispatch(addNewUser(data));
+            dispatch(registerUserByReferral(data));
         }
     };
 
@@ -317,7 +320,7 @@ const Register = () => {
                     <div className="relative flex flex-col justify-center rounded-md bg-white/60 backdrop-blur-lg dark:bg-black/50 px-6 lg:min-h-[758px] py-20">
                         <div className="mx-auto w-full max-w-[440px]">
                             <div className="mb-10 flex flex-col items-center text-center">
-                                <img src="assets/images/rubidya.png" alt="logo" className="w-44" />
+                                <img src="/assets/images/rubidya.png" alt="logo" className="w-44" />
                                 <h1 className="text-3xl font-extrabold uppercase !leading-snug text-primary md:text-2xl">Sign Up</h1>
                                 <p className="text-base font-bold leading-normal text-white-dark">Provide your details to register</p>
                             </div>
@@ -325,7 +328,15 @@ const Register = () => {
                                 <div>
                                     <label htmlFor="Name">First Name</label>
                                     <div className="relative text-white-dark">
-                                        <input id="firstName" type="text" placeholder="Enter First Name" className="form-input ps-10 placeholder:text-white-dark" required />
+                                        <input
+                                            id="firstName"
+                                            type="text"
+                                            placeholder="Enter First Name"
+                                            value={firstName}
+                                            onChange={(e) => setFirstName(e.target.value)}
+                                            className="form-input ps-10 placeholder:text-white-dark"
+                                            required
+                                        />
                                         <span className="absolute start-4 top-1/2 -translate-y-1/2">
                                             <IconUser fill={true} />
                                         </span>
@@ -334,7 +345,15 @@ const Register = () => {
                                 <div>
                                     <label htmlFor="Name">Last Name</label>
                                     <div className="relative text-white-dark">
-                                        <input id="firstName" type="text" placeholder="Enter First Name" className="form-input ps-10 placeholder:text-white-dark" required />
+                                        <input
+                                            id="firstName"
+                                            type="text"
+                                            placeholder="Enter First Name"
+                                            value={lastName}
+                                            onChange={(e) => setLastName(e.target.value)}
+                                            className="form-input ps-10 placeholder:text-white-dark"
+                                            required
+                                        />
                                         <span className="absolute start-4 top-1/2 -translate-y-1/2">
                                             <IconUser fill={true} />
                                         </span>
@@ -343,7 +362,14 @@ const Register = () => {
                                 <div>
                                     <label htmlFor="Email">Email</label>
                                     <div className="relative text-white-dark">
-                                        <input id="Email" type="email" placeholder="Enter Email" className="form-input ps-10 placeholder:text-white-dark" />
+                                        <input
+                                            id="Email"
+                                            type="email"
+                                            placeholder="Enter Email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            className="form-input ps-10 placeholder:text-white-dark"
+                                        />
                                         <span className="absolute start-4 top-1/2 -translate-y-1/2">
                                             <IconMail fill={true} />
                                         </span>
@@ -354,7 +380,7 @@ const Register = () => {
                                         <div className="w-1/4">
                                             <label htmlFor="countryCode">Country Code</label>
                                             <div className="relative text-white-dark">
-                                                <select className="form-select text-white-dark" required>
+                                                <select className="form-select text-white-dark" value={countryCode} onChange={(e) => setCountryCode(e.target.value)} required>
                                                     <option>Select</option>
                                                     {countries.map((country) => (
                                                         <option key={country.code} value={country.code}>{`${country.country} (${country.code})`}</option>
@@ -363,9 +389,16 @@ const Register = () => {
                                             </div>
                                         </div>
                                         <div className="w-3/4">
-                                            <label htmlFor="countryCode">Mobile</label>
+                                            <label htmlFor="mobile">Mobile</label>
                                             <div className="relative text-white-dark">
-                                                <input id="Email" type="email" placeholder="Enter Email" className="form-input ps-10 placeholder:text-white-dark" />
+                                                <input
+                                                    id="mobile"
+                                                    type="text"
+                                                    placeholder="Enter Mobile"
+                                                    value={mobile}
+                                                    onChange={(e) => setMobile(e.target.value)}
+                                                    className="form-input ps-10 placeholder:text-white-dark"
+                                                />
                                                 <span className="absolute start-4 top-1/2 -translate-y-1/2">
                                                     <IconPhone fill={true} />
                                                 </span>
@@ -381,7 +414,14 @@ const Register = () => {
                                         </div>
                                     </div>
                                     <div className="relative text-white-dark">
-                                        <input id="Password" type={showPass ? 'text' : 'password'} placeholder="Enter Password" className="form-input ps-10 placeholder:text-white-dark" />
+                                        <input
+                                            id="Password"
+                                            type={showPass ? 'text' : 'password'}
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            placeholder="Enter Password"
+                                            className="form-input ps-10 placeholder:text-white-dark"
+                                        />
                                         <span className="absolute start-4 top-1/2 -translate-y-1/2">
                                             <IconLockDots fill={true} />
                                         </span>
@@ -390,7 +430,14 @@ const Register = () => {
                                 <div>
                                     <label htmlFor="Password">Re-Enter Password</label>
                                     <div className="relative text-white-dark">
-                                        <input id="Password" type={showPass ? 'text' : 'password'} placeholder="Re-Enter Password" className="form-input ps-10 placeholder:text-white-dark" />
+                                        <input
+                                            id="Password"
+                                            type={showPass ? 'text' : 'password'}
+                                            placeholder="Re-Enter Password"
+                                            value={reEnterPassword}
+                                            onChange={(e) => setReEnterPassword(e.target.value)}
+                                            className="form-input ps-10 placeholder:text-white-dark"
+                                        />
                                         <span className="absolute start-4 top-1/2 -translate-y-1/2">
                                             <IconLockDots fill={true} />
                                         </span>

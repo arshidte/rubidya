@@ -346,7 +346,11 @@ export const addPayId = asyncHandler(async (req, res) => {
     throw new Error("Please send the payId and uniqueId");
   }
 
-  const user = await User.findByIdAndUpdate(userId, { payId, uniqueId });
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { payId, uniqueId, isVerified: true },
+    { new: true }
+  );
 
   if (user) {
     res.status(200).json({ sts: "01", msg: "PayId added successfully" });
@@ -403,3 +407,25 @@ export const refferalTreeCount = asyncHandler(async (req, res) => {
   }
 });
 
+// Clear the walletAmount after successfully synced with original wallet
+export const clearWalletAmount = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const user = await User.findById(userId);
+
+  if (user) {
+    user.walletAmount = 0;
+    const updatedUser = await user.save();
+    if (updatedUser) {
+      res
+        .status(200)
+        .json({ sts: "01", msg: "Wallet amount cleared successfully" });
+    } else {
+      res
+        .status(400)
+        .json({ sts: "00", msg: "Error in clearing wallet amount" });
+    }
+  } else {
+    res.status(404).json({ sts: "00", msg: "User not found" });
+  }
+});

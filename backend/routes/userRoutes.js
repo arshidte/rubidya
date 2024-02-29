@@ -4,6 +4,7 @@ const router = express.Router();
 import { protect } from "../middleware/authMiddleware.js";
 import {
   addPayId,
+  clearWalletAmount,
   getDirectRefferedUsers,
   getMedia,
   getUserProfile,
@@ -43,5 +44,8 @@ router.route("/get-direct-refferals").get(protect, getDirectRefferedUsers);
 
 // Get refferal tree count
 router.route("/get-refferal-tree-count").get(protect, refferalTreeCount);
+
+// Clear the wallet
+router.route("/clear-wallet").get(protect, clearWalletAmount);
 
 export default router;

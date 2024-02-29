@@ -98,7 +98,6 @@ export const addPercentagesSlice = createSlice({
 
 // Get the count of users
 export const getUsersCount = createAsyncThunk('getUsersCount', async () => {
-
     const token: any = localStorage.getItem('userInfo');
     const parsedData = JSON.parse(token);
 
@@ -110,9 +109,8 @@ export const getUsersCount = createAsyncThunk('getUsersCount', async () => {
     };
 
     const response = await axios.get(`${URL}/api/admin/get-users-count`, config);
-    
-    return response.data;
 
+    return response.data;
 });
 
 export const getUsersCountSlice = createSlice({
@@ -145,6 +143,55 @@ export const getUsersCountSlice = createSlice({
     },
 });
 
+// Register user by refferal
+export const registerUserByReferral = createAsyncThunk('registerUserByRefferal', async (data: any) => {
+    
+    const config = {
+        headers: {
+            'content-type': 'application/json',
+        },
+    };
+
+    const response = await axios.post(
+        `${URL}/api/users/add-user-by-refferal`,
+        { userId: data.userId, firstName: data.firstName, lastName: data.lastName, email: data.email, phone: data.mobile, password: data.password, countryCode: data.countryCode },
+        config
+    );
+
+    return response.data;
+});
+
+export const registerUserByReferralSlice = createSlice({
+    name: 'registerUserByReferralSlice',
+    initialState: {
+        loading: false,
+        data: null,
+        error: '',
+    },
+    reducers: {},
+    extraReducers: (builder) => {
+        builder
+            .addCase(registerUserByReferral.pending, (state: any) => {
+                state.loading = true;
+            })
+            .addCase(registerUserByReferral.fulfilled, (state, action) => {
+                state.loading = false;
+                state.data = action.payload;
+            })
+            .addCase(registerUserByReferral.rejected, (state, action) => {
+                state.loading = false;
+                console.error('Error', action.payload);
+
+                if (action.error.message === 'Request failed with status code 500') {
+                    state.error = 'Please make sure you filled all the above details!';
+                } else if (action.error.message === 'Request failed with status code 400') {
+                    state.error = 'Email or Phone already used!';
+                }
+            });
+    },
+});
+
+export const registerUserByReferralReducer = registerUserByReferralSlice.reducer;
 export const getUsersCountReducer = getUsersCountSlice.reducer;
 export const addPercentagesReducer = addPercentagesSlice.reducer;
 export const getAllUsersReducer = getAllUsersSlice.reducer;
