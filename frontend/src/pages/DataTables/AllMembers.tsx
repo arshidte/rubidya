@@ -47,6 +47,13 @@ const AllMembers = () => {
     const [search, setSearch] = useState('');
     const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({ columnAccessor: 'id', direction: 'asc' });
 
+    // Inside the AllMembers component
+    useEffect(() => {
+        if (rowData) {
+            setInitialRecords(sortBy(rowData, 'id'));
+        }
+    }, [rowData]);
+
     useEffect(() => {
         setPage(1);
     }, [pageSize]);
@@ -57,23 +64,23 @@ const AllMembers = () => {
         setRecordsData([...initialRecords.slice(from, to)]);
     }, [page, pageSize, initialRecords, rowData]);
 
-    useEffect(() => {
-        setInitialRecords(() => {
-            return (
-                rowData &&
-                rowData.filter((item: any) => {
-                    return (
-                        item.firstName.toLowerCase().includes(search.toLowerCase()) ||
-                        item.lastName.toLowerCase().includes(search.toLowerCase()) ||
-                        item.email.toLowerCase().includes(search.toLowerCase()) ||
-                        item.country.toLowerCase().includes(search.toLowerCase()) ||
-                        item.phone.toLowerCase().includes(search.toLowerCase())
-                    );
-                })
-            );
-        });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [search]);
+    // useEffect(() => {
+    //     setInitialRecords(() => {
+    //         return (
+    //             rowData &&
+    //             rowData.filter((item: any) => {
+    //                 return (
+    //                     item.firstName.toLowerCase().includes(search.toLowerCase()) ||
+    //                     item.lastName.toLowerCase().includes(search.toLowerCase()) ||
+    //                     item.email.toLowerCase().includes(search.toLowerCase()) ||
+    //                     item.country.toLowerCase().includes(search.toLowerCase()) ||
+    //                     item.phone.toLowerCase().includes(search.toLowerCase())
+    //                 );
+    //             })
+    //         );
+    //     });
+    //     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // }, [search]);
 
     useEffect(() => {
         const data = sortBy(initialRecords, sortStatus.columnAccessor);
@@ -249,7 +256,7 @@ const AllMembers = () => {
     return (
         <div>
             <div className="panel mt-6">
-                <div className="flex md:items-center justify-between md:flex-row flex-col mb-4.5 gap-5">
+                {/* <div className="flex md:items-center justify-between md:flex-row flex-col mb-4.5 gap-5">
                     <div className="flex items-center flex-wrap">
                         <button type="button" onClick={() => exportTable('csv')} className="btn btn-primary btn-sm m-1 ">
                             <IconFile className="w-5 h-5 ltr:mr-2 rtl:ml-2" />
@@ -272,7 +279,7 @@ const AllMembers = () => {
                     </div>
 
                     <input type="text" className="form-input w-auto" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
-                </div>
+                </div> */}
                 <div className="datatables">
                     <DataTable
                         highlightOnHover

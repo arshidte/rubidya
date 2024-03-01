@@ -348,7 +348,7 @@ const Register = () => {
                                         <input
                                             id="firstName"
                                             type="text"
-                                            placeholder="Enter First Name"
+                                            placeholder="Enter Last Name"
                                             value={lastName}
                                             onChange={(e) => setLastName(e.target.value)}
                                             className="form-input ps-10 placeholder:text-white-dark"
@@ -377,8 +377,8 @@ const Register = () => {
                                 </div>
                                 <div>
                                     <div className="flex gap-2">
-                                        <div className="w-1/4">
-                                            <label htmlFor="countryCode">Country Code</label>
+                                        <div className="w-1/3">
+                                            <label htmlFor="countryCode">Country</label>
                                             <div className="relative text-white-dark">
                                                 <select className="form-select text-white-dark" value={countryCode} onChange={(e) => setCountryCode(e.target.value)} required>
                                                     <option>Select</option>
@@ -388,7 +388,7 @@ const Register = () => {
                                                 </select>
                                             </div>
                                         </div>
-                                        <div className="w-3/4">
+                                        <div className="w-2/3">
                                             <label htmlFor="mobile">Mobile</label>
                                             <div className="relative text-white-dark">
                                                 <input
