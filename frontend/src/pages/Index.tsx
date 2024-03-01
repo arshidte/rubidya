@@ -33,7 +33,7 @@ const Index = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-6 text-white mt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 mb-6 text-white mt-6">
                 <div className="panel bg-gradient-to-r from-blue-500 to-blue-400">
                     <div className="flex justify-between">
                         <div className="ltr:mr-1 rtl:ml-1 text-md font-semibold">Total Users</div>
@@ -61,15 +61,6 @@ const Index = () => {
                     </div>
                 </div>
 
-                <div className="panel bg-gradient-to-r from-blue-500 to-blue-400">
-                    <div className="flex justify-between">
-                        <div className="ltr:mr-1 rtl:ml-1 text-md font-semibold">Bounce Rate</div>
-                    </div>
-                    <div className="flex items-center mt-5">
-                        <div className="text-3xl font-bold ltr:mr-3 rtl:ml-3"> 49.10% </div>
-                        <div className="badge bg-white/30">- 0.35% </div>
-                    </div>
-                </div>
             </div>
         </div>
     );
