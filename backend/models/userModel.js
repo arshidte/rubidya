@@ -35,7 +35,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    isVerified: { // Verified if the user exist in rubideum wallet
+    isOTPVerified: {
+      type: Boolean,
+      default: false,
+    },
+    isVerified: {
+      // Verified if the user exist in rubideum wallet
       type: Boolean,
       default: false,
     },

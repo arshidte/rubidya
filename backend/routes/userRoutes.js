@@ -12,7 +12,9 @@ import {
   refferalTreeCount,
   registerUser,
   registerUserByReferral,
+  resendOTP,
   uploadImage,
+  verifyOTP,
   verifyUser,
 } from "../controllers/userController.js";
 import {
@@ -23,11 +25,18 @@ import {
 router.route("/").post(protect, registerUser);
 router.route("/add-user-by-refferal").post(registerUserByReferral);
 
+// OTP Verification
+router.route("/verify-otp").post(verifyOTP);
+
+// Resend OTP
+router.route("/resend-otp").post(resendOTP);
+
 // Get user profile
 router.route("/profile").get(protect, getUserProfile);
 
 router.route("/login").post(loginUser);
 router.route("/verify-user").post(protect, verifyUser);
+
 // Upload image
 router
   .route("/upload-image")

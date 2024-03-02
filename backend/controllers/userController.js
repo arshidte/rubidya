@@ -1,10 +1,15 @@
 import asyncHandler from "../middleware/asyncHandler.js";
 import User from "../models/userModel.js";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 
 import Level from "../models/levelModel.js";
 import Media from "../models/mediaModel.js";
 import sharp from "sharp";
+
+import { transporter } from "../config/nodeMailer.js";
+import UserOTPVerification from "../models/otpModel.js";
+import { Router } from "express";
 
 const generateRandomString = () => {
   const baseString = "RBD";
@@ -14,12 +19,63 @@ const generateRandomString = () => {
 
 function generateOTP() {
   // Generate a random number between 10000 and 99999 (inclusive)
-  const randomNumber = Math.floor(Math.random() * 90000) + 10000;
+  const randomNumber = Math.floor(Math.random() * 9000) + 1000;
   return randomNumber;
 }
 
+// Send OTP verification email
+const sendOTP = async ({ _id, email }, res) => {
+  try {
+    const OTP = generateOTP();
+
+    const mailOptions = {
+      from: '"Rubidya" <info@rubidya.com>',
+      to: email,
+      subject: "Verify Your Rubidya Account",
+      html: `<p>Enter the <b>${OTP}</b> in the app to verify your email</p>`,
+    };
+
+    // Hash the OTP
+    const salt = await bcrypt.genSalt(10);
+    const hashedOTP = await bcrypt.hash(OTP.toString(), salt); // Convert OTP to string before hashing
+    const newOTPVerification = new UserOTPVerification({
+      userId: _id,
+      OTP: hashedOTP,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 3600000,
+    });
+
+    // Save OTP record
+    const newOTP = await newOTPVerification.save();
+
+    if (newOTP) {
+      await transporter.sendMail(mailOptions);
+
+      // Check if 'res' is defined before calling 'json'
+      if (res && typeof res.json === "function") {
+        res.json({
+          status: "PENDING",
+          message: "Verification OTP email sent",
+          data: {
+            userId: _id,
+            email,
+          },
+        });
+      } else {
+        console.error("Response object is not properly defined.");
+      }
+    } else {
+      res.status(400);
+      throw new Error("Error saving OTP record");
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 // Register User
 export const registerUser = asyncHandler(async (req, res) => {
+
   const { firstName, lastName, phone, countryCode, email, password } = req.body;
 
   if (!firstName || !phone || !countryCode || !email || !password) {
@@ -37,14 +93,14 @@ export const registerUser = asyncHandler(async (req, res) => {
   } else {
     const ownSponsorId = generateRandomString();
 
-    if (countryCode) {
-      if (countryCode == +91) {
-        // Send OTP message
-      } else {
-        const OTP = generateOTP();
-        // sendMail(email, OTP);
-      }
-    }
+    // if (countryCode) {
+    //   if (countryCode == +91) {
+    //     // Send OTP message
+    //   } else {
+    //   }
+    // }
+
+    // await sendMail(email, OTP);
 
     const createUser = await User.create({
       sponsor: null,
@@ -62,29 +118,105 @@ export const registerUser = asyncHandler(async (req, res) => {
     });
 
     if (createUser) {
-      const token = jwt.sign(
-        { userId: createUser._id },
-        "secret_of_jwt_for_rubidya_5959",
-        {
-          expiresIn: "800d",
-        }
-      );
+      // const OTP = generateOTP();
 
-      res.status(201).json({
-        sponsor: createUser.sponsor,
-        firstName: createUser.firstName,
-        lastName: createUser.lastName,
-        phone: createUser.phone,
-        countryCode: createUser.countryCode,
-        email: createUser.email,
-        token_type: "Bearer",
-        access_token: token,
-        sts: "01",
-        msg: "Success",
-      });
+      sendOTP({ _id: createUser._id, email: createUser.email }, res);
+      // Handle account verification
+      // const token = jwt.sign(
+      //   { userId: createUser._id },
+      //   "secret_of_jwt_for_rubidya_5959",
+      //   {
+      //     expiresIn: "800d",
+      //   }
+      // );
+      // res.status(201).json({
+      //   sponsor: createUser.sponsor,
+      //   firstName: createUser.firstName,
+      //   lastName: createUser.lastName,
+      //   phone: createUser.phone,
+      //   countryCode: createUser.countryCode,
+      //   email: createUser.email,
+      //   token_type: "Bearer",
+      //   access_token: token,
+      //   sts: "01",
+      //   msg: "Success",
+      // });
     } else {
       res.status(400);
       throw new Error("Invalid user data");
+    }
+  }
+});
+
+// Verify OTP Email
+export const verifyOTP = asyncHandler(async (req, res) => {
+
+  const { OTP, userId } = req.body;
+
+  if (!userId || !OTP) {
+    res.status(400);
+    throw new Error("Please enter all the required fields");
+  } else {
+    const userOTP = await UserOTPVerification.findOne({
+      userId,
+    });
+
+    if (userOTP.length <= 0) {
+      throw new Error("OTP record does not exist!");
+    } else {
+      // Check if OTP is expired
+      const { expiresAt } = userOTP;
+
+      if (expiresAt < Date.now()) {
+        await userOTP.deleteMany({ userId });
+        throw new Error("OTP has expired!");
+      } else {
+        const validOTP = await bcrypt.compare(OTP, userOTP.OTP);
+
+        if (!validOTP) {
+          throw new Error("Invalid OTP code passed!");
+        } else {
+          const updatedUser = User.updateOne(
+            { _id: userId },
+            { $set: { isOTPVerified: true } }
+          );
+          if (updatedUser) {
+            const deleteOTP = await UserOTPVerification.deleteMany({ userId });
+
+            if (deleteOTP) {
+              res.json({
+                sts: "01",
+                msg: "OTP verified successfully",
+              });
+            } else {
+              res.status(400);
+              throw new Error("Error deleting OTP record");
+            }
+          } else {
+            res.status(400);
+            throw new Error("Error updating user record");
+          }
+        }
+      }
+    }
+  }
+});
+
+// Resend OTP
+export const resendOTP = asyncHandler(async (req, res) => {
+  
+  const { email, userId } = req.body;
+
+  if (!userId || !email) {
+    res.status(400);
+    throw new Error("Please enter all the required fields");
+  } else {
+    const deleteExistingOTP = await UserOTPVerification.deleteMany({ userId });
+    if (deleteExistingOTP) {
+      sendOTP({ _id: userId, email }, res);
+    } else {
+      res.status(400);
+      throw new Error("Error deleting existing OTP record");
     }
   }
 });
@@ -109,14 +241,17 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
   } else {
     const ownSponsorId = generateRandomString();
 
-    if (countryCode) {
-      if (countryCode == +91) {
-        // Send OTP message
-      } else {
-        const OTP = generateOTP();
-        // sendMail(email, OTP);
-      }
-    }
+    // if (countryCode) {
+    //   if (countryCode == +91) {
+    //     // Send OTP message
+    //   } else {
+    //     const OTP = generateOTP();
+    //     // sendMail(email, OTP);
+    //   }
+    // }
+
+    // const OTP = generateOTP();
+    // const mailSent = sendMail(email, OTP);
 
     const createUser = await User.create({
       sponsor: userId || null,
@@ -134,48 +269,52 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
     });
 
     if (createUser) {
+      // const OTP = generateOTP();
+
+      sendOTP({ _id: createUser._id, email: createUser.email }, res);
+
       // Access token is necessory as we are using this same API
       // for both refferal as well as normal registration.
-      const token = jwt.sign(
-        { userId: createUser._id },
-        "secret_of_jwt_for_rubidya_5959",
-        {
-          expiresIn: "800d",
-        }
-      );
+      // const token = jwt.sign(
+      //   { userId: createUser._id },
+      //   "secret_of_jwt_for_rubidya_5959",
+      //   {
+      //     expiresIn: "800d",
+      //   }
+      // );
 
       // Add the new created user to the referred user's referrals
-      if (userId) {
-        const referredUser = await User.findOneAndUpdate(
-          { _id: userId },
-          { $push: { referrals: createUser._id } },
-          { new: true }
-        );
+      // if (userId) {
+      //   const referredUser = await User.findOneAndUpdate(
+      //     { _id: userId },
+      //     { $push: { referrals: createUser._id } },
+      //     { new: true }
+      //   );
 
-        if (referredUser) {
-          res.status(201).json({
-            firstName: createUser.firstName,
-            lastName: createUser.lastName,
-            phone: createUser.phone,
-            email: createUser.email,
-            token_type: "Bearer",
-            access_token: token,
-            sts: "01",
-            msg: "Success",
-          });
-        }
-      } else {
-        res.status(201).json({
-          firstName: createUser.firstName,
-          lastName: createUser.lastName,
-          phone: createUser.phone,
-          email: createUser.email,
-          token_type: "Bearer",
-          access_token: token,
-          sts: "01",
-          msg: "Success",
-        });
-      }
+      //   if (referredUser) {
+      //     res.status(201).json({
+      //       firstName: createUser.firstName,
+      //       lastName: createUser.lastName,
+      //       phone: createUser.phone,
+      //       email: createUser.email,
+      //       token_type: "Bearer",
+      //       access_token: token,
+      //       sts: "01",
+      //       msg: "Success",
+      //     });
+      //   }
+      // } else {
+      //   res.status(201).json({
+      //     firstName: createUser.firstName,
+      //     lastName: createUser.lastName,
+      //     phone: createUser.phone,
+      //     email: createUser.email,
+      //     token_type: "Bearer",
+      //     access_token: token,
+      //     sts: "01",
+      //     msg: "Success",
+      //   });
+      // }
     } else {
       res.status(400);
       throw new Error("Invalid user data");

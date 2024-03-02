@@ -1,29 +1,30 @@
-import asyncHandler from "../middleware/asyncHandler.js";
 import nodemailer from "nodemailer";
 
-let transporter = nodemailer.createTransport({
-    host: 'smtp.example.com',
-    port: 587,
-    secure: false,
+export const transporter = nodemailer.createTransport({
+    host: 'smtp.zoho.in',
+    port: 465,
+    secure: true,
     auth: {
-        user: 'username',
-        pass: 'password'
+        user: 'info@rubidya.com',
+        pass: '1@Rubidya'
     }
 });
 
-const sendMail = asyncHandler(async (toMail, otp) => {
+// const sendMail = asyncHandler(async (toMail, otp) => {
+//     console.log("Sending mail to " + toMail);
 
-    let mailOptions = {
-        from: '"Rubidya" <noreply@rubidya.com>',
-        to: `${toMail}`,
-        suject: 'Rubidya OTP',
-        text: `OTP for registration is ${otp}`,
-    }
+//     let mailOptions = {
+//         from: '"Rubidya" <info@rubidya.com>',
+//         to: `${toMail}`,
+//         suject: 'Rubidya OTP',
+//         text: `OTP for registration is ${otp}`,
+//     }
     
-    let info = await transporter.sendMail(mailOptions);
+//     let info = await transporter.sendMail(mailOptions);
 
-    console.log(`Message sent: ${info.messageId}`);
+//     console.log(`Message sent: ${info.messageId}`);
+//     return info.messageId; 
 
-})
+// })
 
-export default sendMail;
+// export default sendMail;
