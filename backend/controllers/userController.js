@@ -302,7 +302,7 @@ export const verifyOTPForForget = asyncHandler(async (req, res) => {
       const { expiresAt } = userOTP;
 
       if (expiresAt < Date.now()) {
-        await userOTP.deleteMany({ userId });
+        await userOTP.deleteMany({ email });
         throw new Error("OTP has expired!");
       } else {
         const validOTP = await bcrypt.compare(OTP, userOTP.OTP);
@@ -310,7 +310,7 @@ export const verifyOTPForForget = asyncHandler(async (req, res) => {
         if (!validOTP) {
           throw new Error("Invalid OTP code passed!");
         } else {
-          const deleteOTP = await UserOTPVerification.deleteMany({ userId });
+          const deleteOTP = await UserOTPVerification.deleteMany({ email });
 
           if (deleteOTP) {
             res.json({
@@ -683,5 +683,27 @@ export const clearWalletAmount = asyncHandler(async (req, res) => {
     }
   } else {
     res.status(404).json({ sts: "00", msg: "User not found" });
+  }
+});
+
+// Change password
+export const changePassword = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!password) {
+    res.status(400);
+    throw new Error("Please send the password");
+  }
+
+  const user = await User.findOne({ email });
+
+  if (user) {
+    user.password = password;
+    const updatedUser = await user.save();
+    if (updatedUser) {
+      res.status(200).json({ sts: "01", msg: "Password changed successfully" });
+    } else {
+      res.status(400).json({ sts: "00", msg: "Error in changing password" });
+    }
   }
 });

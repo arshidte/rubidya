@@ -4,6 +4,7 @@ const router = express.Router();
 import { protect } from "../middleware/authMiddleware.js";
 import {
   addPayId,
+  changePassword,
   clearWalletAmount,
   getDirectReferredUsers,
   getMedia,
@@ -35,6 +36,9 @@ router.route("/send-forget-otp").post(sendOTPforForget);
 
 // Verify OTP for forget password
 router.route("/forget-password-otp").post(verifyOTPForForget);
+
+// Change password
+router.route("/change-password").put(changePassword);
 
 // Resend OTP
 router.route("/resend-otp").post(resendOTP);
