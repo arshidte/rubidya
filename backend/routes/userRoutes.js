@@ -5,7 +5,7 @@ import { protect } from "../middleware/authMiddleware.js";
 import {
   addPayId,
   clearWalletAmount,
-  getDirectRefferedUsers,
+  getDirectReferredUsers,
   getMedia,
   getUserProfile,
   loginUser,
@@ -15,6 +15,7 @@ import {
   resendOTP,
   uploadImage,
   verifyOTP,
+  verifyOTPForForget,
   verifyUser,
 } from "../controllers/userController.js";
 import {
@@ -27,6 +28,9 @@ router.route("/add-user-by-refferal").post(registerUserByReferral);
 
 // OTP Verification
 router.route("/verify-otp").post(verifyOTP);
+
+// Verify OTP for forget password
+router.route("/forget-password-otp").post(verifyOTPForForget);
 
 // Resend OTP
 router.route("/resend-otp").post(resendOTP);
@@ -49,7 +53,7 @@ router.route("/get-media").get(protect, getMedia);
 router.route("/add-pay-id").post(protect, addPayId);
 
 // Get direct reffered users
-router.route("/get-direct-refferals").get(protect, getDirectRefferedUsers);
+router.route("/get-direct-refferals").get(protect, getDirectReferredUsers);
 
 // Get refferal tree count
 router.route("/get-refferal-tree-count").get(protect, refferalTreeCount);

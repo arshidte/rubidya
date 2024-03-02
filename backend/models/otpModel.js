@@ -9,6 +9,9 @@ const UserOTPVerificationSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  email: {
+    type: String,
+  },
   createdAt: {
     type: Date,
   },

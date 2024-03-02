@@ -41,6 +41,7 @@ const sendOTP = async ({ _id, email }, res) => {
     const newOTPVerification = new UserOTPVerification({
       userId: _id,
       OTP: hashedOTP,
+      email: email ? email : "",
       createdAt: Date.now(),
       expiresAt: Date.now() + 3600000,
     });
@@ -56,10 +57,8 @@ const sendOTP = async ({ _id, email }, res) => {
         res.json({
           status: "PENDING",
           message: "Verification OTP email sent",
-          data: {
-            userId: _id,
-            email,
-          },
+          userId: _id,
+          email,
         });
       } else {
         console.error("Response object is not properly defined.");
@@ -75,7 +74,6 @@ const sendOTP = async ({ _id, email }, res) => {
 
 // Register User
 export const registerUser = asyncHandler(async (req, res) => {
-
   const { firstName, lastName, phone, countryCode, email, password } = req.body;
 
   if (!firstName || !phone || !countryCode || !email || !password) {
@@ -150,7 +148,6 @@ export const registerUser = asyncHandler(async (req, res) => {
 
 // Verify OTP Email
 export const verifyOTP = asyncHandler(async (req, res) => {
-
   const { OTP, userId } = req.body;
 
   if (!userId || !OTP) {
@@ -202,9 +199,8 @@ export const verifyOTP = asyncHandler(async (req, res) => {
   }
 });
 
-// Resend OTP
+// Resend OTP (Use this same API for forget password)
 export const resendOTP = asyncHandler(async (req, res) => {
-  
   const { email, userId } = req.body;
 
   if (!userId || !email) {
@@ -217,6 +213,50 @@ export const resendOTP = asyncHandler(async (req, res) => {
     } else {
       res.status(400);
       throw new Error("Error deleting existing OTP record");
+    }
+  }
+});
+
+// Verify forget password OTP
+export const verifyOTPForForget = asyncHandler(async (req, res) => {
+  const { OTP, email, userId } = req.body;
+
+  if (!email || !OTP) {
+    res.status(400);
+    throw new Error("Please enter all the required fields");
+  } else {
+    const userOTP = await UserOTPVerification.findOne({
+      email,
+    });
+
+    if (userOTP.length <= 0) {
+      throw new Error("OTP record does not exist!");
+    } else {
+      // Check if OTP is expired
+      const { expiresAt } = userOTP;
+
+      if (expiresAt < Date.now()) {
+        await userOTP.deleteMany({ userId });
+        throw new Error("OTP has expired!");
+      } else {
+        const validOTP = await bcrypt.compare(OTP, userOTP.OTP);
+
+        if (!validOTP) {
+          throw new Error("Invalid OTP code passed!");
+        } else {
+          const deleteOTP = await UserOTPVerification.deleteMany({ userId });
+
+          if (deleteOTP) {
+            res.json({
+              sts: "01",
+              msg: "OTP verified successfully",
+            });
+          } else {
+            res.status(400);
+            throw new Error("Error deleting OTP record");
+          }
+        }
+      }
     }
   }
 });
@@ -271,6 +311,14 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
     if (createUser) {
       // const OTP = generateOTP();
 
+      // Add the new created user to the referred user's referrals
+      if (userId) {
+        const referredUser = await User.findOneAndUpdate(
+          { _id: userId },
+          { $push: { referrals: createUser._id } },
+          { new: true }
+        );
+      }
       sendOTP({ _id: createUser._id, email: createUser.email }, res);
 
       // Access token is necessory as we are using this same API
@@ -282,14 +330,6 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
       //     expiresIn: "800d",
       //   }
       // );
-
-      // Add the new created user to the referred user's referrals
-      // if (userId) {
-      //   const referredUser = await User.findOneAndUpdate(
-      //     { _id: userId },
-      //     { $push: { referrals: createUser._id } },
-      //     { new: true }
-      //   );
 
       //   if (referredUser) {
       //     res.status(201).json({
@@ -407,6 +447,15 @@ export const verifyUser = asyncHandler(async (req, res) => {
     }
 
     user.isAccountVerified = true;
+
+    // Show amount spend transaction in user's transactions
+    // user.transactions.push({
+    //   amount,
+    //   kind: "premium",
+    //   fromWhom: "self",
+    //   status: "approved",
+    // });
+
     const level = await Level.findOne();
 
     const percentageArray = level.levelPercentages;
@@ -499,16 +548,18 @@ export const addPayId = asyncHandler(async (req, res) => {
 });
 
 // Get the direct reffered users' list
-export const getDirectRefferedUsers = asyncHandler(async (req, res) => {
+export const getDirectReferredUsers = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
   const user = await User.findById(userId).populate({
     path: "referrals",
-    select: "firstName lastName email phone isVerified isAccountVerified",
+    select:
+      "firstName lastName email phone isVerified isAccountVerified transactions",
   });
 
   if (user) {
     const referrals = user.referrals;
+
     if (referrals) {
       res.status(200).json({ sts: "01", msg: "Success", referrals });
     } else {
