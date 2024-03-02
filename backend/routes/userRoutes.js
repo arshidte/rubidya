@@ -13,6 +13,7 @@ import {
   registerUser,
   registerUserByReferral,
   resendOTP,
+  sendOTPforForget,
   uploadImage,
   verifyOTP,
   verifyOTPForForget,
@@ -28,6 +29,9 @@ router.route("/add-user-by-refferal").post(registerUserByReferral);
 
 // OTP Verification
 router.route("/verify-otp").post(verifyOTP);
+
+// Send forget OTP
+router.route("/send-forget-otp").post(sendOTPforForget);
 
 // Verify OTP for forget password
 router.route("/forget-password-otp").post(verifyOTPForForget);

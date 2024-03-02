@@ -32,7 +32,7 @@ const sendOTP = async ({ _id, email }, res) => {
       from: '"Rubidya" <info@rubidya.com>',
       to: email,
       subject: "Verify Your Rubidya Account",
-      html: `<p>Enter the <b>${OTP}</b> in the app to verify your email</p>`,
+      html: `<p>Enter the OTP <b>${OTP}</b> in the app to verify your email</p>`,
     };
 
     // Hash the OTP
@@ -58,6 +58,54 @@ const sendOTP = async ({ _id, email }, res) => {
           status: "PENDING",
           message: "Verification OTP email sent",
           userId: _id,
+          email,
+        });
+      } else {
+        console.error("Response object is not properly defined.");
+      }
+    } else {
+      res.status(400);
+      throw new Error("Error saving OTP record");
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// Send OTP for forget password
+const sendOTPForget = async ({ email }, res) => {
+  try {
+    const OTP = generateOTP();
+
+    const mailOptions = {
+      from: '"Rubidya" <info@rubidya.com>',
+      to: email,
+      subject: "Reset Rubidya Account",
+      html: `<p>Enter the OTP <b>${OTP}</b> for resetting account</p>`,
+    };
+
+    // Hash the OTP
+    const salt = await bcrypt.genSalt(10);
+    const hashedOTP = await bcrypt.hash(OTP.toString(), salt); // Convert OTP to string before hashing
+
+    const newOTPVerification = new UserOTPVerification({
+      OTP: hashedOTP,
+      email: email ? email : "",
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 3600000,
+    });
+
+    // Save OTP record
+    const newOTP = await newOTPVerification.save();
+
+    if (newOTP) {
+      await transporter.sendMail(mailOptions);
+
+      // Check if 'res' is defined before calling 'json'
+      if (res && typeof res.json === "function") {
+        res.json({
+          status: "PENDING",
+          message: "OTP email sent",
           email,
         });
       } else {
@@ -217,9 +265,27 @@ export const resendOTP = asyncHandler(async (req, res) => {
   }
 });
 
+// Resend OTP (Send OTP for forget)
+export const sendOTPforForget = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    res.status(400);
+    throw new Error("Please enter all the required fields");
+  } else {
+    const deleteExistingOTP = await UserOTPVerification.deleteMany({ email });
+    if (deleteExistingOTP) {
+      sendOTPForget({ email }, res);
+    } else {
+      res.status(400);
+      throw new Error("Error deleting existing OTP record");
+    }
+  }
+});
+
 // Verify forget password OTP
 export const verifyOTPForForget = asyncHandler(async (req, res) => {
-  const { OTP, email, userId } = req.body;
+  const { OTP, email } = req.body;
 
   if (!email || !OTP) {
     res.status(400);

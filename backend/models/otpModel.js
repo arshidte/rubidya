@@ -3,7 +3,6 @@ import mongoose from "mongoose";
 const UserOTPVerificationSchema = new mongoose.Schema({
   userId: {
     type: String,
-    required: true,
   },
   OTP: {
     type: String,
