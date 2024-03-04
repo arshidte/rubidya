@@ -39,6 +39,37 @@ export const addLevelPercentages = asyncHandler(async (req, res) => {
   }
 });
 
+// Get all level percentages
+export const getAllLevelPercentages = asyncHandler(async (req, res) => {
+  const level = await Level.findOne();
+  if (level) {
+    res.status(200).json(level.levelPercentages);
+  } else {
+    res.status(404).json({ message: "No level percentages found" });
+  }
+});
+
+// Edit the percentage of each level
+export const editLevelPercentages = asyncHandler(async (req, res) => {
+  const { level, percentage } = req.body;
+
+  const updatedLevel = await Level.findOneAndUpdate(
+    { "levelPercentages.level": level },
+    { $set: { "levelPercentages.$.percentage": percentage } },
+    { new: true }
+  );
+
+  if (updatedLevel) {
+    res.status(201).json({
+      message: "Level percentages updated successfully",
+    });
+  } else {
+    res.status(400).json({
+      message: "Level percentages not updated",
+    });
+  }
+});
+
 // Get total numbers of users to admin
 export const getUsersCount = asyncHandler(async (req, res) => {
   // const usersCount = await User.countDocuments({});
