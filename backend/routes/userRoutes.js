@@ -6,6 +6,7 @@ import {
   addPayId,
   changePassword,
   clearWalletAmount,
+  deductRubideum,
   getDirectReferredUsers,
   getMedia,
   getUserProfile,
@@ -68,5 +69,9 @@ router.route("/get-refferal-tree-count").get(protect, refferalTreeCount);
 
 // Clear the wallet
 router.route("/clear-wallet").get(protect, clearWalletAmount);
+
+// Calculate Rubideum
+router.route("/deduct-rubideum").post(protect, deductRubideum);
+
 
 export default router;

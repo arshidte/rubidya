@@ -7,6 +7,7 @@ import {
   getUsersCount,
 } from "../controllers/adminController.js";
 import { protect } from "../middleware/authMiddleware.js";
+import { addPackage } from "../controllers/packageController.js";
 const router = express.Router();
 
 // Get all users to admin
@@ -23,5 +24,8 @@ router.route("/edit-level-percentages").put(protect, editLevelPercentages);
 
 // Get total numbers of users to admin
 router.route("/get-users-count").get(protect, getUsersCount);
+
+// Add new package
+router.route("/add-package").post(protect, addPackage);
 
 export default router;

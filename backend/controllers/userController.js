@@ -10,6 +10,7 @@ import sharp from "sharp";
 import { transporter } from "../config/nodeMailer.js";
 import UserOTPVerification from "../models/otpModel.js";
 import { Router } from "express";
+import axios from "axios";
 
 const generateRandomString = () => {
   const baseString = "RBD";
@@ -705,5 +706,57 @@ export const changePassword = asyncHandler(async (req, res) => {
     } else {
       res.status(400).json({ sts: "00", msg: "Error in changing password" });
     }
+  }
+});
+
+// Calculate Rubideum for 500
+export const deductRubideum = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const { amount } = req.body;
+
+  const user = await User.findById(userId);
+
+  if (
+    !user.payId ||
+    !user.uniqueId ||
+    user.payId === "" ||
+    user.uniqueId === ""
+  ) {
+    res.status(400);
+    throw new Error("Please send the payId and uniqueId");
+  }
+
+  // API to fetch the current market value of Rubideum
+  const currentValueResponse = await axios.get(
+    "https://pwyfklahtrh.rubideum.net/api/endPoint1/RBD_INR"
+  );
+
+  const currentValue = currentValueResponse.data.data.last_price;
+
+  // Rubideum to pass
+  const rubideumToPass = amount / currentValue;
+
+  console.log(rubideumToPass);
+
+  // API to deduct balance
+  const response = await axios.post(
+    "https://pwyfklahtrh.rubideum.net/basic/deductBalanceAuto",
+    {
+      payId: "RBD968793034",
+      uniqueId: "64eaf0a9cec8b5bb72f56d01",
+      amount: rubideumToPass,
+      currency: "RBD",
+    }
+  );
+
+  const dataFetched = response.data;
+
+  console.log(dataFetched);
+
+  if (dataFetched.success === 1) {
+    res.status(200).json({ sts: "01", msg: "Rubideum deducted successfully" });
+  } else {
+    res.status(400).json({ sts: "00", msg: "Error in deducting rubideum" });
   }
 });
