@@ -257,7 +257,6 @@ const countries = [
 ];
 
 const Register = () => {
-
     const { userId } = useParams();
 
     const dispatch = useAppDispatch();
@@ -274,7 +273,7 @@ const Register = () => {
     const { data: userData } = useAppSelector((state: any) => state.registerByReferral);
 
     useEffect(() => {
-        dispatch(setPageTitle('Register new member'));
+        dispatch(setPageTitle('Register new User'));
     }, []);
 
     // Reset user data and error state after successful submission
@@ -301,6 +300,8 @@ const Register = () => {
             alert('Fill all fields');
             return;
         } else {
+            console.log('reached here');
+
             dispatch(registerUserByReferral(data));
         }
     };
@@ -382,8 +383,8 @@ const Register = () => {
                                             <div className="relative text-white-dark">
                                                 <select className="form-select text-white-dark" value={countryCode} onChange={(e) => setCountryCode(e.target.value)} required>
                                                     <option>Select</option>
-                                                    {countries.map((country) => (
-                                                        <option key={country.code} value={country.code}>{`${country.country} (${country.code})`}</option>
+                                                    {countries.map((country, idx) => (
+                                                        <option key={idx} value={country.code}>{`${country.country} (${country.code})`}</option>
                                                     ))}
                                                 </select>
                                             </div>
@@ -428,10 +429,10 @@ const Register = () => {
                                     </div>
                                 </div>
                                 <div>
-                                    <label htmlFor="Password">Re-Enter Password</label>
+                                    <label htmlFor="re-enterPassword">Re-Enter Password</label>
                                     <div className="relative text-white-dark">
                                         <input
-                                            id="Password"
+                                            id="re-enterPassword"
                                             type={showPass ? 'text' : 'password'}
                                             placeholder="Re-Enter Password"
                                             value={reEnterPassword}

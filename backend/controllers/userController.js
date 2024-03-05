@@ -431,6 +431,7 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
 
 // Login user
 export const loginUser = asyncHandler(async (req, res) => {
+
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
@@ -453,6 +454,7 @@ export const loginUser = asyncHandler(async (req, res) => {
       phone: user.phone,
       isAdmin: user.isAdmin,
       ownSponsorId: user.ownSponsorId,
+      isOTPVerified: user.isOTPVerified,
       token_type: "Bearer",
       access_token: token,
       sts: "01",
@@ -737,8 +739,6 @@ export const deductRubideum = asyncHandler(async (req, res) => {
   // Rubideum to pass
   const rubideumToPass = amount / currentValue;
 
-  console.log(rubideumToPass);
-
   // API to deduct balance
   const response = await axios.post(
     "https://pwyfklahtrh.rubideum.net/basic/deductBalanceAuto",
@@ -752,10 +752,14 @@ export const deductRubideum = asyncHandler(async (req, res) => {
 
   const dataFetched = response.data;
 
-  console.log(dataFetched);
-
   if (dataFetched.success === 1) {
-    res.status(200).json({ sts: "01", msg: "Rubideum deducted successfully" });
+    res
+      .status(200)
+      .json({
+        sts: "01",
+        msg: "Rubideum deducted successfully",
+        rubideumToPass,
+      });
   } else {
     res.status(400).json({ sts: "00", msg: "Error in deducting rubideum" });
   }
