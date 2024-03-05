@@ -344,10 +344,10 @@ const Register = () => {
                                     </div>
                                 </div>
                                 <div>
-                                    <label htmlFor="Name">Last Name</label>
+                                    <label htmlFor="lastName">Last Name</label>
                                     <div className="relative text-white-dark">
                                         <input
-                                            id="firstName"
+                                            id="lastName"
                                             type="text"
                                             placeholder="Enter Last Name"
                                             value={lastName}

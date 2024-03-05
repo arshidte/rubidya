@@ -55,7 +55,7 @@ const sendOTP = async ({ _id, email }, res) => {
 
       // Check if 'res' is defined before calling 'json'
       if (res && typeof res.json === "function") {
-        res.json({
+        res.status(200).json({
           status: "PENDING",
           message: "Verification OTP email sent",
           userId: _id,
@@ -333,6 +333,7 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
   const { firstName, lastName, phone, countryCode, email, password, userId } =
     req.body;
 
+
   if (!firstName || !phone || !countryCode || !email || !password) {
     res.status(400);
     throw new Error("Please enter all the required fields");
@@ -341,20 +342,20 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
   const user = await User.findOne({
     $or: [{ email }, { phone }],
   });
-
+  
   if (user) {
     res.status(400);
     throw new Error("User already exists");
   } else {
     const ownSponsorId = generateRandomString();
-
+    
     // if (countryCode) {
     //   if (countryCode == +91) {
-    //     // Send OTP message
-    //   } else {
-    //     const OTP = generateOTP();
-    //     // sendMail(email, OTP);
-    //   }
+      //     // Send OTP message
+      //   } else {
+        //     const OTP = generateOTP();
+        //     // sendMail(email, OTP);
+        //   }
     // }
 
     // const OTP = generateOTP();
@@ -377,7 +378,7 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
 
     if (createUser) {
       // const OTP = generateOTP();
-
+      
       // Add the new created user to the referred user's referrals
       if (userId) {
         const referredUser = await User.findOneAndUpdate(
@@ -431,7 +432,6 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
 
 // Login user
 export const loginUser = asyncHandler(async (req, res) => {
-
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
@@ -753,13 +753,11 @@ export const deductRubideum = asyncHandler(async (req, res) => {
   const dataFetched = response.data;
 
   if (dataFetched.success === 1) {
-    res
-      .status(200)
-      .json({
-        sts: "01",
-        msg: "Rubideum deducted successfully",
-        rubideumToPass,
-      });
+    res.status(200).json({
+      sts: "01",
+      msg: "Rubideum deducted successfully",
+      rubideumToPass,
+    });
   } else {
     res.status(400).json({ sts: "00", msg: "Error in deducting rubideum" });
   }
