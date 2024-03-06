@@ -5,7 +5,7 @@ import { protect } from "../middleware/authMiddleware.js";
 import {
   addPayId,
   changePassword,
-  clearWalletAmount,
+  // clearWalletAmount,
   deductRubideum,
   getDirectReferredUsers,
   getMedia,
@@ -69,7 +69,7 @@ router.route("/get-direct-refferals").get(protect, getDirectReferredUsers);
 router.route("/get-refferal-tree-count").get(protect, refferalTreeCount);
 
 // Clear the wallet
-router.route("/clear-wallet").get(protect, clearWalletAmount);
+// router.route("/clear-wallet").get(protect, clearWalletAmount);
 
 // Calculate Rubideum
 router.route("/deduct-rubideum").post(protect, deductRubideum);

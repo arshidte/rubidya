@@ -682,27 +682,27 @@ export const refferalTreeCount = asyncHandler(async (req, res) => {
 });
 
 // Clear the walletAmount after successfully synced with original wallet
-export const clearWalletAmount = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
+// export const clearWalletAmount = asyncHandler(async (req, res) => {
+//   const userId = req.user._id;
 
-  const user = await User.findById(userId);
+//   const user = await User.findById(userId);
 
-  if (user) {
-    user.walletAmount = 0;
-    const updatedUser = await user.save();
-    if (updatedUser) {
-      res
-        .status(200)
-        .json({ sts: "01", msg: "Wallet amount cleared successfully" });
-    } else {
-      res
-        .status(400)
-        .json({ sts: "00", msg: "Error in clearing wallet amount" });
-    }
-  } else {
-    res.status(404).json({ sts: "00", msg: "User not found" });
-  }
-});
+//   if (user) {
+//     user.walletAmount = 0;
+//     const updatedUser = await user.save();
+//     if (updatedUser) {
+//       res
+//         .status(200)
+//         .json({ sts: "01", msg: "Wallet amount cleared successfully" });
+//     } else {
+//       res
+//         .status(400)
+//         .json({ sts: "00", msg: "Error in clearing wallet amount" });
+//     }
+//   } else {
+//     res.status(404).json({ sts: "00", msg: "User not found" });
+//   }
+// });
 
 // Change password
 export const changePassword = asyncHandler(async (req, res) => {
@@ -807,10 +807,18 @@ export const syncWallet = asyncHandler(async (req, res) => {
       const dataFetched = response.data;
 
       if (dataFetched.success === 1) {
-        res.status(200).json({
-          sts: "01",
-          msg: "Unrealised synced successfully",
-        });
+        user.walletAmount = 0;
+        const updatedUser = await user.save();
+        if (updatedUser) {
+          res.status(200).json({
+            sts: "01",
+            msg: "Unrealised synced successfully",
+          });
+        } else {
+          res
+            .status(400)
+            .json({ sts: "00", msg: "User not updated" });
+        }
       } else {
         res.status(400).json({ sts: "00", msg: "Error in syncing unrealised" });
       }
