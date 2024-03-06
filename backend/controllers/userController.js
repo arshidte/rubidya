@@ -471,7 +471,9 @@ const splitCommissions = async (user, amount, levels, percentages) => {
     return;
   }
 
+  console.log(`Amount type ${typeof amount}`);
   const commission = (percentages[0] / 100) * amount;
+  console.log(`Type of commission: ${typeof commission}`);
   const sponsor = await User.findById(user.sponsor);
 
   if (sponsor) {
@@ -494,7 +496,7 @@ const splitCommissions = async (user, amount, levels, percentages) => {
     });
 
     if (!sponsor.totalReferralAmount) {
-      sponsor.totalReferralAmount = 0;
+      sponsor.totalReferralAmount = commission;
     } else {
       sponsor.totalReferralAmount += commission;
     }
@@ -756,8 +758,8 @@ export const deductRubideum = asyncHandler(async (req, res) => {
   const response = await axios.post(
     "https://pwyfklahtrh.rubideum.net/basic/deductBalanceAuto",
     {
-      payId: "RBD968793034",
-      uniqueId: "64eaf0a9cec8b5bb72f56d01",
+      payId: user.payId,
+      uniqueId: user.uniqueId,
       amount: rubideumToPass,
       currency: "RBD",
     }
@@ -771,7 +773,51 @@ export const deductRubideum = asyncHandler(async (req, res) => {
       msg: "Rubideum deducted successfully",
       rubideumToPass,
     });
+    // user.isAccountVerified = true;
+    // const updatedUser = await user.save();
+    // if (updatedUser) {
+    // } else {
+    //   res.status(400).json({ sts: "00", msg: "Error in deducting rubideum" });
+    // }
   } else {
     res.status(400).json({ sts: "00", msg: "Error in deducting rubideum" });
+  }
+});
+
+// Sync unrealised to wallet amount
+export const syncWallet = asyncHandler(async (req, res) => {
+  const userid = req.user._id;
+
+  if (userid) {
+    const user = await User.findById(userid);
+
+    if (user) {
+      // API to credit balance
+      // API to deduct balance
+      const response = await axios.post(
+        "https://pwyfklahtrh.rubideum.net/basic/creditBalanceAuto",
+        {
+          payId: user.payId,
+          uniqueId: user.uniqueId,
+          amount: user.walletAmount,
+          currency: "RBD",
+        }
+      );
+
+      const dataFetched = response.data;
+
+      if (dataFetched.success === 1) {
+        res.status(200).json({
+          sts: "01",
+          msg: "Unrealised synced successfully",
+        });
+      } else {
+        res.status(400).json({ sts: "00", msg: "Error in syncing unrealised" });
+      }
+    } else {
+      res.status(400).json({ sts: "00", msg: "User not found" });
+    }
+  } else {
+    res.status(400).json({ sts: "00", msg: "Please login first" });
   }
 });

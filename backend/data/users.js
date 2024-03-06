@@ -12,6 +12,7 @@ const users = [
     isAdmin: true,
     ownSponsorId: "RDB876534",
     isVerified: true,
+    totalReferralAmount: 0,
   },
 ];
 

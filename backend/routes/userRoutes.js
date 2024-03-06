@@ -16,6 +16,7 @@ import {
   registerUserByReferral,
   resendOTP,
   sendOTPforForget,
+  syncWallet,
   uploadImage,
   verifyOTP,
   verifyOTPForForget,
@@ -72,6 +73,9 @@ router.route("/clear-wallet").get(protect, clearWalletAmount);
 
 // Calculate Rubideum
 router.route("/deduct-rubideum").post(protect, deductRubideum);
+
+// Sync unrealised to rubideum wallet
+router.route('/sync-wallet').get(protect, syncWallet);
 
 
 export default router;
