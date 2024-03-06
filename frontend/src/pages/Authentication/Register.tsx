@@ -1,17 +1,13 @@
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+// import { useDispatch, useSelector } from 'react-redux';
 import { IRootState, useAppDispatch, useAppSelector } from '../../store';
 import { setPageTitle, toggleRTL } from '../../store/themeConfigSlice';
-import { useEffect, useState } from 'react';
-import Dropdown from '../../components/Dropdown';
-import i18next from 'i18next';
-import IconCaretDown from '../../components/Icon/IconCaretDown';
+import { registerUserByReferral, resendOTP, verifyOTP } from '../../store/adminSlice';
 import IconUser from '../../components/Icon/IconUser';
 import IconMail from '../../components/Icon/IconMail';
-import IconLockDots from '../../components/Icon/IconLockDots';
 import IconPhone from '../../components/Icon/IconPhone';
-import { count } from 'console';
-import { registerUserByReferral } from '../../store/adminSlice';
+import IconLockDots from '../../components/Icon/IconLockDots';
 
 const countries = [
     { country: 'Afghanistan', code: '93', iso: 'AF' },
@@ -261,6 +257,8 @@ const Register = () => {
 
     const dispatch = useAppDispatch();
 
+    const [enterOTP, setEnterOTP] = useState(false);
+
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
@@ -270,7 +268,11 @@ const Register = () => {
     const [password, setPassword] = useState('');
     const [showPass, setShowPass] = useState(false);
 
-    const { data: userData } = useAppSelector((state: any) => state.registerByReferral);
+    const [otp, setOtp] = useState('');
+
+    const { loading: userLoading, data: userData, error: userError } = useAppSelector((state: any) => state.registerByReferral);
+    const { data: otpData } = useAppSelector((state: any) => state.verifyOTPData);
+    const { data: resendData } = useAppSelector((state: any) => state.resendOTPData);
 
     useEffect(() => {
         dispatch(setPageTitle('Register new User'));
@@ -281,12 +283,11 @@ const Register = () => {
         if (userData) {
             setFirstName('');
             setLastName('');
-            setEmail('');
             setMobile('');
             setPassword('');
             setReEnterPassword('');
 
-            alert('Registration successful');
+            setEnterOTP(true);
         }
     }, [userData]);
 
@@ -299,12 +300,56 @@ const Register = () => {
         } else if (!firstName || !lastName || !email || !countryCode || !mobile || !password) {
             alert('Fill all fields');
             return;
+        } else if (mobile.length !== 10) {
+            alert('Mobile number must be 10 digits');
+            return;
         } else {
-            console.log('reached here');
-
             dispatch(registerUserByReferral(data));
         }
     };
+
+    const submitOTP = (e: any) => {
+        e.preventDefault();
+        if (userData) {
+            const userId = userData.userId;
+            const data = { userId, otp };
+
+            if (!otp) {
+                alert('Enter OTP');
+                return;
+            } else {
+                dispatch(verifyOTP(data));
+            }
+        }
+    };
+
+    const resendOTPHandler = (e: any) => {
+        e.preventDefault();
+        if (userData) {
+            const userId = userData.userId;
+            const data = { userId, email };
+            dispatch(resendOTP(data));
+        }
+    };
+
+    useEffect(() => {
+        if (otpData) {
+            setEnterOTP(false);
+            alert('User registered successfully. Download the app to start using it.');
+        }
+    }, [otpData]);
+
+    const [showText, setShowText] = useState(false);
+
+    useEffect(() => {
+        if (userData) {
+            const timer = setTimeout(() => {
+                setShowText(true);
+            }, 10000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [userData]);
 
     return (
         <div>
@@ -325,130 +370,172 @@ const Register = () => {
                                 <h1 className="text-3xl font-extrabold uppercase !leading-snug text-primary md:text-2xl">Sign Up</h1>
                                 <p className="text-base font-bold leading-normal text-white-dark">Provide your details to register</p>
                             </div>
-                            <form className="space-y-5 dark:text-white">
-                                <div>
-                                    <label htmlFor="Name">First Name</label>
-                                    <div className="relative text-white-dark">
-                                        <input
-                                            id="firstName"
-                                            type="text"
-                                            placeholder="Enter First Name"
-                                            value={firstName}
-                                            onChange={(e) => setFirstName(e.target.value)}
-                                            className="form-input ps-10 placeholder:text-white-dark"
-                                            required
-                                        />
-                                        <span className="absolute start-4 top-1/2 -translate-y-1/2">
-                                            <IconUser fill={true} />
-                                        </span>
+                            {!enterOTP ? (
+                                <form className="space-y-5 dark:text-white">
+                                    <div>
+                                        <label htmlFor="Name">First Name</label>
+                                        <div className="relative text-white-dark">
+                                            <input
+                                                id="firstName"
+                                                type="text"
+                                                placeholder="Enter First Name"
+                                                value={firstName}
+                                                onChange={(e) => setFirstName(e.target.value)}
+                                                className="form-input ps-10 placeholder:text-white-dark"
+                                                required
+                                            />
+                                            <span className="absolute start-4 top-1/2 -translate-y-1/2">
+                                                <IconUser fill={true} />
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <label htmlFor="lastName">Last Name</label>
-                                    <div className="relative text-white-dark">
-                                        <input
-                                            id="lastName"
-                                            type="text"
-                                            placeholder="Enter Last Name"
-                                            value={lastName}
-                                            onChange={(e) => setLastName(e.target.value)}
-                                            className="form-input ps-10 placeholder:text-white-dark"
-                                            required
-                                        />
-                                        <span className="absolute start-4 top-1/2 -translate-y-1/2">
-                                            <IconUser fill={true} />
-                                        </span>
+                                    <div>
+                                        <label htmlFor="lastName">Last Name</label>
+                                        <div className="relative text-white-dark">
+                                            <input
+                                                id="lastName"
+                                                type="text"
+                                                placeholder="Enter Last Name"
+                                                value={lastName}
+                                                onChange={(e) => setLastName(e.target.value)}
+                                                className="form-input ps-10 placeholder:text-white-dark"
+                                                required
+                                            />
+                                            <span className="absolute start-4 top-1/2 -translate-y-1/2">
+                                                <IconUser fill={true} />
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <label htmlFor="Email">Email</label>
-                                    <div className="relative text-white-dark">
-                                        <input
-                                            id="Email"
-                                            type="email"
-                                            placeholder="Enter Email"
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            className="form-input ps-10 placeholder:text-white-dark"
-                                        />
-                                        <span className="absolute start-4 top-1/2 -translate-y-1/2">
-                                            <IconMail fill={true} />
-                                        </span>
+                                    <div>
+                                        <label htmlFor="Email">Email</label>
+                                        <div className="relative text-white-dark">
+                                            <input
+                                                id="Email"
+                                                type="email"
+                                                placeholder="Enter Email"
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                className="form-input ps-10 placeholder:text-white-dark"
+                                            />
+                                            <span className="absolute start-4 top-1/2 -translate-y-1/2">
+                                                <IconMail fill={true} />
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div className="flex gap-2">
-                                        <div className="w-1/3">
-                                            <label htmlFor="countryCode">Country</label>
-                                            <div className="relative text-white-dark">
-                                                <select className="form-select text-white-dark" value={countryCode} onChange={(e) => setCountryCode(e.target.value)} required>
-                                                    <option>Select</option>
-                                                    {countries.map((country, idx) => (
-                                                        <option key={idx} value={country.code}>{`${country.country} (${country.code})`}</option>
-                                                    ))}
-                                                </select>
+                                    <div>
+                                        <div className="flex gap-2">
+                                            <div className="w-1/3">
+                                                <label htmlFor="countryCode">Country</label>
+                                                <div className="relative text-white-dark">
+                                                    <select className="form-select text-white-dark" value={countryCode} onChange={(e) => setCountryCode(e.target.value)} required>
+                                                        <option>Select</option>
+                                                        {countries.map((country, idx) => (
+                                                            <option key={idx} value={country.code}>{`${country.country} (${country.code})`}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div className="w-2/3">
+                                                <label htmlFor="mobile">Mobile</label>
+                                                <div className="relative text-white-dark">
+                                                    <input
+                                                        id="mobile"
+                                                        type="text"
+                                                        placeholder="Enter Mobile"
+                                                        value={mobile}
+                                                        onChange={(e) => setMobile(e.target.value)}
+                                                        className="form-input ps-10 placeholder:text-white-dark"
+                                                    />
+                                                    <span className="absolute start-4 top-1/2 -translate-y-1/2">
+                                                        <IconPhone fill={true} />
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="w-2/3">
-                                            <label htmlFor="mobile">Mobile</label>
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center justify-between">
+                                            <label htmlFor="Password">Password</label>
+                                            <div onClick={() => setShowPass(!showPass)} className="hover:underline hover:cursor-pointer">
+                                                Show Password
+                                            </div>
+                                        </div>
+                                        <div className="relative text-white-dark">
+                                            <input
+                                                id="Password"
+                                                type={showPass ? 'text' : 'password'}
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                placeholder="Enter Password"
+                                                className="form-input ps-10 placeholder:text-white-dark"
+                                            />
+                                            <span className="absolute start-4 top-1/2 -translate-y-1/2">
+                                                <IconLockDots fill={true} />
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="re-enterPassword">Re-Enter Password</label>
+                                        <div className="relative text-white-dark">
+                                            <input
+                                                id="re-enterPassword"
+                                                type={showPass ? 'text' : 'password'}
+                                                placeholder="Re-Enter Password"
+                                                value={reEnterPassword}
+                                                onChange={(e) => setReEnterPassword(e.target.value)}
+                                                className="form-input ps-10 placeholder:text-white-dark"
+                                            />
+                                            <span className="absolute start-4 top-1/2 -translate-y-1/2">
+                                                <IconLockDots fill={true} />
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button type="submit" onClick={submitForm} className="btn btn-gradient !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
+                                        {userLoading ? (
+                                            <>
+                                                <span className="animate-spin border-2 border-white border-l-transparent rounded-full w-5 h-5 ltr:mr-4 rtl:ml-4 inline-block align-middle"></span>
+                                                Loading...
+                                            </>
+                                        ) : (
+                                            `Sign Up`
+                                        )}
+                                    </button>
+                                </form>
+                            ) : (
+                                <>
+                                    <form className="space-y-5 dark:text-white">
+                                        <div>
+                                            <label htmlFor="otp">Enter OTP</label>
                                             <div className="relative text-white-dark">
                                                 <input
-                                                    id="mobile"
-                                                    type="text"
-                                                    placeholder="Enter Mobile"
-                                                    value={mobile}
-                                                    onChange={(e) => setMobile(e.target.value)}
+                                                    id="otp"
+                                                    type="number"
+                                                    placeholder="Enter OTP received on your Email"
+                                                    value={otp}
+                                                    onChange={(e) => setOtp(e.target.value)}
                                                     className="form-input ps-10 placeholder:text-white-dark"
+                                                    required
                                                 />
                                                 <span className="absolute start-4 top-1/2 -translate-y-1/2">
-                                                    <IconPhone fill={true} />
+                                                    <IconUser fill={true} />
                                                 </span>
                                             </div>
                                         </div>
+                                        <button type="submit" onClick={submitOTP} className="btn btn-gradient !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
+                                            Confirm
+                                        </button>
+                                    </form>
+                                    <div className="flex items-center justify-center mt-5">
+                                        {showText && (
+                                            <>
+                                                Didn't receive OTP? <span onClick={resendOTPHandler} className='hover:underline text-blue-400 cursor-pointer'>Resend</span>
+                                            </>
+                                        )}
                                     </div>
-                                </div>
-                                <div>
-                                    <div className="flex items-center justify-between">
-                                        <label htmlFor="Password">Password</label>
-                                        <div onClick={() => setShowPass(!showPass)} className="hover:underline hover:cursor-pointer">
-                                            Show Password
-                                        </div>
-                                    </div>
-                                    <div className="relative text-white-dark">
-                                        <input
-                                            id="Password"
-                                            type={showPass ? 'text' : 'password'}
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            placeholder="Enter Password"
-                                            className="form-input ps-10 placeholder:text-white-dark"
-                                        />
-                                        <span className="absolute start-4 top-1/2 -translate-y-1/2">
-                                            <IconLockDots fill={true} />
-                                        </span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label htmlFor="re-enterPassword">Re-Enter Password</label>
-                                    <div className="relative text-white-dark">
-                                        <input
-                                            id="re-enterPassword"
-                                            type={showPass ? 'text' : 'password'}
-                                            placeholder="Re-Enter Password"
-                                            value={reEnterPassword}
-                                            onChange={(e) => setReEnterPassword(e.target.value)}
-                                            className="form-input ps-10 placeholder:text-white-dark"
-                                        />
-                                        <span className="absolute start-4 top-1/2 -translate-y-1/2">
-                                            <IconLockDots fill={true} />
-                                        </span>
-                                    </div>
-                                </div>
-                                <button type="submit" onClick={submitForm} className="btn btn-gradient !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
-                                    Sign Up
-                                </button>
-                            </form>
+                                </>
+                            )}
                         </div>
+                        <div className="flex items-center justify-center mt-5">{userError && `Some error occured. Please try again!`}</div>
                     </div>
                 </div>
             </div>

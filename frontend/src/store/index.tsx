@@ -4,7 +4,7 @@ import { TypedUseSelectorHook, useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux';
 
 import authReducer from './authSlice';
-import { getAllUsersReducer, getUsersCountReducer, registerUserByReferralReducer } from './adminSlice';
+import { getAllUsersReducer, getUsersCountReducer, registerUserByReferralReducer, verifyOTPReducer, resendOTPReducer } from './adminSlice';
 import { addPercentagesReducer, getPercentagesReducer } from './levelSlice';
 
 const rootReducer = combineReducers({
@@ -15,6 +15,8 @@ const rootReducer = combineReducers({
     getUsersCount: getUsersCountReducer,
     registerByReferral: registerUserByReferralReducer,
     getPercentages: getPercentagesReducer,
+    verifyOTPData: verifyOTPReducer,
+    resendOTPData: resendOTPReducer,
 });
 
 const store = configureStore({

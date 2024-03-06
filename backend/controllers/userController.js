@@ -199,6 +199,7 @@ export const registerUser = asyncHandler(async (req, res) => {
 export const verifyOTP = asyncHandler(async (req, res) => {
   const { OTP, userId } = req.body;
 
+
   if (!userId || !OTP) {
     res.status(400);
     throw new Error("Please enter all the required fields");
@@ -248,7 +249,7 @@ export const verifyOTP = asyncHandler(async (req, res) => {
   }
 });
 
-// Resend OTP (Use this same API for forget password)
+// Resend OTP
 export const resendOTP = asyncHandler(async (req, res) => {
   const { email, userId } = req.body;
 
