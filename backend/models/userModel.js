@@ -50,6 +50,12 @@ const userSchema = new mongoose.Schema(
     },
     walletAmount: {
       type: Number,
+      double: true,
+      default: 0,
+    },
+    totalReferralAmount: {
+      type: Number,
+      double: true,
       default: 0,
     },
     transactions: [

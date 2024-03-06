@@ -199,7 +199,6 @@ export const registerUser = asyncHandler(async (req, res) => {
 export const verifyOTP = asyncHandler(async (req, res) => {
   const { OTP, userId } = req.body;
 
-
   if (!userId || !OTP) {
     res.status(400);
     throw new Error("Please enter all the required fields");
@@ -334,7 +333,6 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
   const { firstName, lastName, phone, countryCode, email, password, userId } =
     req.body;
 
-
   if (!firstName || !phone || !countryCode || !email || !password) {
     res.status(400);
     throw new Error("Please enter all the required fields");
@@ -343,20 +341,20 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
   const user = await User.findOne({
     $or: [{ email }, { phone }],
   });
-  
+
   if (user) {
     res.status(400);
     throw new Error("User already exists");
   } else {
     const ownSponsorId = generateRandomString();
-    
+
     // if (countryCode) {
     //   if (countryCode == +91) {
-      //     // Send OTP message
-      //   } else {
-        //     const OTP = generateOTP();
-        //     // sendMail(email, OTP);
-        //   }
+    //     // Send OTP message
+    //   } else {
+    //     const OTP = generateOTP();
+    //     // sendMail(email, OTP);
+    //   }
     // }
 
     // const OTP = generateOTP();
@@ -379,7 +377,7 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
 
     if (createUser) {
       // const OTP = generateOTP();
-      
+
       // Add the new created user to the referred user's referrals
       if (userId) {
         const referredUser = await User.findOneAndUpdate(
@@ -456,6 +454,7 @@ export const loginUser = asyncHandler(async (req, res) => {
       isAdmin: user.isAdmin,
       ownSponsorId: user.ownSponsorId,
       isOTPVerified: user.isOTPVerified,
+      totalReferralAmount: user.totalReferralAmount,
       token_type: "Bearer",
       access_token: token,
       sts: "01",
@@ -476,10 +475,14 @@ const splitCommissions = async (user, amount, levels, percentages) => {
   const sponsor = await User.findById(user.sponsor);
 
   if (sponsor) {
-    const walletAmount =
-      Math.round((sponsor.walletAmount + commission) * 10) / 10;
+    // const walletAmount =
+    //   Math.round((sponsor.walletAmount + commission) * 10) / 10;
 
-    sponsor.walletAmount = walletAmount;
+    if (!sponsor.walletAmount) {
+      sponsor.walletAmount = commission;
+    } else {
+      sponsor.walletAmount += commission;
+    }
 
     sponsor.transactions.push({
       amount: commission,
@@ -489,6 +492,12 @@ const splitCommissions = async (user, amount, levels, percentages) => {
       percentage: percentages[0],
       status: "approved",
     });
+
+    if (!sponsor.totalReferralAmount) {
+      sponsor.totalReferralAmount = 0;
+    } else {
+      sponsor.totalReferralAmount += commission;
+    }
 
     await sponsor.save();
     splitCommissions(sponsor, amount, levels - 1, percentages.slice(1));
@@ -529,10 +538,13 @@ export const verifyUser = asyncHandler(async (req, res) => {
     const level = await Level.findOne();
 
     const percentageArray = level.levelPercentages;
+
     const percentages = [];
     percentageArray.map((item) => {
       percentages.push(item.percentage);
     });
+
+    console.log(percentages);
 
     await splitCommissions(user, amount, percentages.length, percentages);
 
