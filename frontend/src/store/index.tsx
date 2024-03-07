@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 
 import authReducer from './authSlice';
 import { getAllUsersReducer, getUsersCountReducer, registerUserByReferralReducer, verifyOTPReducer, resendOTPReducer } from './adminSlice';
-import { addPercentagesReducer, getPercentagesReducer } from './levelSlice';
+import { addPercentagesReducer, getPercentagesReducer, editPercentagesReducer } from './levelSlice';
 
 const rootReducer = combineReducers({
     themeConfig: themeConfigSlice,
@@ -17,6 +17,7 @@ const rootReducer = combineReducers({
     getPercentages: getPercentagesReducer,
     verifyOTPData: verifyOTPReducer,
     resendOTPData: resendOTPReducer,
+    editPercentages: editPercentagesReducer,
 });
 
 const store = configureStore({

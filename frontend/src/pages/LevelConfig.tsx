@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { setPageTitle } from '../store/themeConfigSlice';
 import { useAppDispatch, useAppSelector } from '../store';
-import { addPercentages, getPercentages } from '../store/levelSlice';
+import { addPercentages, editPercentages, getPercentages } from '../store/levelSlice';
 
 const LevelConfig: React.FC = () => {
     const { data: percentageData } = useAppSelector((state: any) => state.addPercentages);
     const { data: getPercentagesData } = useAppSelector((state: any) => state.getPercentages);
 
     const [levels, setLevels] = useState([{ level: 10, percentage: '' }]);
+    const [editLevel, setEditLevel] = useState({ level: 0, percentage: 0 });
     const dispatch = useAppDispatch();
 
     useEffect(() => {
@@ -43,10 +44,20 @@ const LevelConfig: React.FC = () => {
     };
 
     const handleEditChange = (level: number, value: string) => {
-        console.log(`level - ${level}, value - ${value}`);
+        setEditLevel((prevState: any) => ({
+            ...prevState,
+            level: level,
+            percentage: value,
+        }));
     };
 
-    const handleEdit = () => {};
+    const handleEdit = (level: number) => {
+        if (editLevel.level == level) {
+            dispatch(editPercentages(editLevel));
+        } else {
+            return;
+        }
+    };
 
     const renderInputFields = () => {
         return levels
@@ -89,14 +100,8 @@ const LevelConfig: React.FC = () => {
                     {getPercentagesData &&
                         getPercentagesData.map((level: any, index: number) => (
                             <div key={index} className="flex flex-col items-center my-4">
-                                <input
-                                    type="text"
-                                    placeholder={`Level ${level.level}%`}
-                                    className="form-input mb-2"
-                                    value={level.percentage}
-                                    onChange={(e) => handleEditChange(level.level, e.target.value)}
-                                />
-                                <button type="button" onClick={handleEdit} className="btn btn-primary mt-1">
+                                <input type="number" placeholder={level.percentage} className="form-input mb-2" onChange={(e) => handleEditChange(level.level, e.target.value)} />
+                                <button type="button" onClick={() => handleEdit(level.level)} className="btn btn-primary mt-1">
                                     Edit
                                 </button>
                             </div>

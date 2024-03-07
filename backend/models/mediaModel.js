@@ -19,6 +19,13 @@ const mediaSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    description: {
+      type: String,
+    },
+    likeCount: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

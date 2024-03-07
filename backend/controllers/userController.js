@@ -270,16 +270,22 @@ export const resendOTP = asyncHandler(async (req, res) => {
 export const sendOTPforForget = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
+  const existEmail = await User.findOne({ email });
+
   if (!email) {
     res.status(400);
     throw new Error("Please enter all the required fields");
   } else {
-    const deleteExistingOTP = await UserOTPVerification.deleteMany({ email });
-    if (deleteExistingOTP) {
-      sendOTPForget({ email }, res);
+    if (existEmail) {
+      const deleteExistingOTP = await UserOTPVerification.deleteMany({ email });
+      if (deleteExistingOTP) {
+        sendOTPForget({ email }, res);
+      } else {
+        res.status(400);
+        throw new Error("Error deleting existing OTP record");
+      }
     } else {
-      res.status(400);
-      throw new Error("Error deleting existing OTP record");
+      res.status(400).json({ sts: "00", msg: "Email does not exist" });
     }
   }
 });
@@ -471,10 +477,9 @@ const splitCommissions = async (user, amount, levels, percentages) => {
     return;
   }
 
-  console.log(`Amount type ${typeof amount}`);
   const commission = (percentages[0] / 100) * amount;
-  console.log(`Type of commission: ${typeof commission}`);
-  const sponsor = await User.findById(user.sponsor);
+
+  const sponsor = await User.findById(user.nodeId);
 
   if (sponsor) {
     // const walletAmount =
@@ -545,8 +550,6 @@ export const verifyUser = asyncHandler(async (req, res) => {
     percentageArray.map((item) => {
       percentages.push(item.percentage);
     });
-
-    console.log(percentages);
 
     await splitCommissions(user, amount, percentages.length, percentages);
 
@@ -620,7 +623,7 @@ export const addPayId = asyncHandler(async (req, res) => {
 
   const user = await User.findByIdAndUpdate(
     userId,
-    { payId, uniqueId, isVerified: true },
+    { payId, uniqueId, isVerified: true, nodeId: user.sponsor },
     { new: true }
   );
 
@@ -680,29 +683,6 @@ export const refferalTreeCount = asyncHandler(async (req, res) => {
     res.status(404).json({ sts: "00", msg: "User not found" });
   }
 });
-
-// Clear the walletAmount after successfully synced with original wallet
-// export const clearWalletAmount = asyncHandler(async (req, res) => {
-//   const userId = req.user._id;
-
-//   const user = await User.findById(userId);
-
-//   if (user) {
-//     user.walletAmount = 0;
-//     const updatedUser = await user.save();
-//     if (updatedUser) {
-//       res
-//         .status(200)
-//         .json({ sts: "01", msg: "Wallet amount cleared successfully" });
-//     } else {
-//       res
-//         .status(400)
-//         .json({ sts: "00", msg: "Error in clearing wallet amount" });
-//     }
-//   } else {
-//     res.status(404).json({ sts: "00", msg: "User not found" });
-//   }
-// });
 
 // Change password
 export const changePassword = asyncHandler(async (req, res) => {
@@ -793,7 +773,6 @@ export const syncWallet = asyncHandler(async (req, res) => {
 
     if (user) {
       // API to credit balance
-      // API to deduct balance
       const response = await axios.post(
         "https://pwyfklahtrh.rubideum.net/basic/creditBalanceAuto",
         {
@@ -815,9 +794,7 @@ export const syncWallet = asyncHandler(async (req, res) => {
             msg: "Unrealised synced successfully",
           });
         } else {
-          res
-            .status(400)
-            .json({ sts: "00", msg: "User not updated" });
+          res.status(400).json({ sts: "00", msg: "User not updated" });
         }
       } else {
         res.status(400).json({ sts: "00", msg: "Error in syncing unrealised" });

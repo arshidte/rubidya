@@ -65,6 +65,7 @@ export const getPercentages = createAsyncThunk('getPercentages', async () => {
 
     return response.data;
 });
+
 export const getPercentagesSlice = createSlice({
     name: 'getPercentagesSlice',
     initialState: {
@@ -95,5 +96,55 @@ export const getPercentagesSlice = createSlice({
     },
 });
 
+export const editPercentages = createAsyncThunk('editPercentages', async (levelPercentages: any) => {
+    
+    const token: any = localStorage.getItem('userInfo');
+    const parsedData = JSON.parse(token);
+
+    const config = {
+        headers: {
+            Authorization: `Bearer ${parsedData.access_token}`,
+            'content-type': 'application/json',
+        },
+    };
+
+    const { level, percentages } = levelPercentages;
+
+    const response = await axios.put(`${URL}/api/admin/edit-level-percentages`, { level, percentages }, config);
+
+    return response.data;
+});
+
+export const editPercentagesSlice = createSlice({
+    name: 'editPercentagesSlice',
+    initialState: {
+        loading: false,
+        data: null,
+        error: '',
+    },
+    reducers: {},
+    extraReducers: (builder) => {
+        builder
+            .addCase(editPercentages.pending, (state: any) => {
+                state.loading = true;
+            })
+            .addCase(editPercentages.fulfilled, (state, action) => {
+                state.loading = false;
+                state.data = action.payload;
+            })
+            .addCase(editPercentages.rejected, (state, action) => {
+                state.loading = false;
+                console.error('Error', action.payload);
+
+                if (action.error.message === 'Request failed with status code 500') {
+                    state.error = 'Please make sure you filled all the above details!';
+                } else if (action.error.message === 'Request failed with status code 400') {
+                    state.error = 'Email or Phone already used!';
+                }
+            });
+    },
+});
+
+export const editPercentagesReducer = editPercentagesSlice.reducer;
 export const getPercentagesReducer = getPercentagesSlice.reducer;
 export const addPercentagesReducer = addPercentagesSlice.reducer;
