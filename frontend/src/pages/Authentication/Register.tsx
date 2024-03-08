@@ -335,7 +335,10 @@ const Register = () => {
     useEffect(() => {
         if (otpData) {
             setEnterOTP(false);
-            alert('User registered successfully. Download the app to start using it.');
+            const res = confirm('User registered successfully. Download the app to start using it.');
+            if (res) {
+                window.location.href = 'https://play.google.com/store/apps/details?id=com.rubidya&pcampaignid=web_share';
+            }
         }
     }, [otpData]);
 
@@ -528,7 +531,10 @@ const Register = () => {
                                     <div className="flex items-center justify-center mt-5">
                                         {showText && (
                                             <>
-                                                Didn't receive OTP? <span onClick={resendOTPHandler} className='hover:underline text-blue-400 cursor-pointer'>Resend</span>
+                                                Didn't receive OTP?{' '}
+                                                <span onClick={resendOTPHandler} className="hover:underline text-blue-400 cursor-pointer">
+                                                    Resend
+                                                </span>
                                             </>
                                         )}
                                     </div>

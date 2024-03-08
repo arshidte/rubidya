@@ -3,9 +3,28 @@ import { setPageTitle } from '../store/themeConfigSlice';
 import { useAppDispatch, useAppSelector } from '../store';
 import { addPercentages, editPercentages, getPercentages } from '../store/levelSlice';
 
+import Swal from 'sweetalert2';
+
 const LevelConfig: React.FC = () => {
+    const showAlert = async (type: number, message: string) => {
+        if (type === 15) {
+            const toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+            });
+            toast.fire({
+                icon: 'success',
+                title: message,
+                padding: '10px 20px',
+            });
+        }
+    };
+
     const { data: percentageData } = useAppSelector((state: any) => state.addPercentages);
     const { data: getPercentagesData } = useAppSelector((state: any) => state.getPercentages);
+    const { data: editPercentagesData } = useAppSelector((state: any) => state.editPercentages);
 
     const [levels, setLevels] = useState([{ level: 10, percentage: '' }]);
     const [editLevel, setEditLevel] = useState({ level: 0, percentage: 0 });
@@ -18,7 +37,8 @@ const LevelConfig: React.FC = () => {
 
     useEffect(() => {
         if (percentageData) {
-            alert('Percentages added successfully!');
+            // alert('Percentages added successfully!');
+            showAlert(15, 'Percentages added successfully!');
         }
     }, [percentageData]);
 
@@ -58,6 +78,12 @@ const LevelConfig: React.FC = () => {
             return;
         }
     };
+
+    useEffect(() => {
+        if (editPercentagesData != null) {
+            showAlert(15, 'Percentages edited successfully!');
+        }
+    }, [editPercentagesData]);
 
     const renderInputFields = () => {
         return levels

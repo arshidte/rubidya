@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, createAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { URL } from '../Constants';
 
@@ -45,7 +45,7 @@ export const addPercentagesSlice = createSlice({
                 } else if (action.error.message === 'Request failed with status code 400') {
                     state.error = 'Email or Phone already used!';
                 }
-            });
+            })
     },
 });
 
@@ -96,8 +96,8 @@ export const getPercentagesSlice = createSlice({
     },
 });
 
+// Edit level percentages
 export const editPercentages = createAsyncThunk('editPercentages', async (levelPercentages: any) => {
-    
     const token: any = localStorage.getItem('userInfo');
     const parsedData = JSON.parse(token);
 
@@ -108,9 +108,9 @@ export const editPercentages = createAsyncThunk('editPercentages', async (levelP
         },
     };
 
-    const { level, percentages } = levelPercentages;
+    const { level, percentage } = levelPercentages;
 
-    const response = await axios.put(`${URL}/api/admin/edit-level-percentages`, { level, percentages }, config);
+    const response = await axios.put(`${URL}/api/admin/edit-level-percentages`, { level, percentage }, config);
 
     return response.data;
 });

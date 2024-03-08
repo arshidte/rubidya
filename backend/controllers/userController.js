@@ -165,29 +165,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     });
 
     if (createUser) {
-      // const OTP = generateOTP();
-
       sendOTP({ _id: createUser._id, email: createUser.email }, res);
-      // Handle account verification
-      // const token = jwt.sign(
-      //   { userId: createUser._id },
-      //   "secret_of_jwt_for_rubidya_5959",
-      //   {
-      //     expiresIn: "800d",
-      //   }
-      // );
-      // res.status(201).json({
-      //   sponsor: createUser.sponsor,
-      //   firstName: createUser.firstName,
-      //   lastName: createUser.lastName,
-      //   phone: createUser.phone,
-      //   countryCode: createUser.countryCode,
-      //   email: createUser.email,
-      //   token_type: "Bearer",
-      //   access_token: token,
-      //   sts: "01",
-      //   msg: "Success",
-      // });
     } else {
       res.status(400);
       throw new Error("Invalid user data");
@@ -393,41 +371,6 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
         );
       }
       sendOTP({ _id: createUser._id, email: createUser.email }, res);
-
-      // Access token is necessory as we are using this same API
-      // for both refferal as well as normal registration.
-      // const token = jwt.sign(
-      //   { userId: createUser._id },
-      //   "secret_of_jwt_for_rubidya_5959",
-      //   {
-      //     expiresIn: "800d",
-      //   }
-      // );
-
-      //   if (referredUser) {
-      //     res.status(201).json({
-      //       firstName: createUser.firstName,
-      //       lastName: createUser.lastName,
-      //       phone: createUser.phone,
-      //       email: createUser.email,
-      //       token_type: "Bearer",
-      //       access_token: token,
-      //       sts: "01",
-      //       msg: "Success",
-      //     });
-      //   }
-      // } else {
-      //   res.status(201).json({
-      //     firstName: createUser.firstName,
-      //     lastName: createUser.lastName,
-      //     phone: createUser.phone,
-      //     email: createUser.email,
-      //     token_type: "Bearer",
-      //     access_token: token,
-      //     sts: "01",
-      //     msg: "Success",
-      //   });
-      // }
     } else {
       res.status(400);
       throw new Error("Invalid user data");
@@ -479,7 +422,7 @@ const splitCommissions = async (user, amount, levels, percentages) => {
 
   const commission = (percentages[0] / 100) * amount;
 
-  const sponsor = await User.findById(user.nodeId);
+  const sponsor = await User.findById(user.sponsor);
 
   if (sponsor) {
     // const walletAmount =
@@ -621,11 +564,16 @@ export const addPayId = asyncHandler(async (req, res) => {
     throw new Error("Please send the payId and uniqueId");
   }
 
-  const user = await User.findByIdAndUpdate(
-    userId,
-    { payId, uniqueId, isVerified: true, nodeId: user.sponsor },
-    { new: true }
-  );
+  const existingUser = await User.findById(userId);
+  if (existingUser) {
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { payId, uniqueId, isVerified: true, nodeId: existingUser.sponsor },
+      { new: true }
+    );
+  } else {
+    res.status(404).json({ sts: "00", msg: "User not found" });
+  }
 
   if (user) {
     res.status(200).json({ sts: "01", msg: "PayId added successfully" });
