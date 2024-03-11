@@ -62,6 +62,16 @@ const userSchema = new mongoose.Schema(
       double: true,
       default: 0,
     },
+    totalMemberProfit: {
+      type: Number,
+      double: true,
+      default: 0,
+    },
+    overallAmount: {
+      type: Number,
+      double: true,
+      default: 0,
+    },
     transactions: [
       {
         amount: Number,
@@ -90,6 +100,10 @@ const userSchema = new mongoose.Schema(
     packageSelected: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Package",
+    },
+    profitSplitting: {
+      type: Boolean,
+      default: false,
     }
   },
   {

@@ -449,7 +449,14 @@ const splitCommissions = async (user, amount, levels, percentages) => {
       sponsor.totalReferralAmount += commission;
     }
 
+    if (!sponsor.overallAmount) {
+      sponsor.overallAmount = commission;
+    } else {
+      sponsor.overallAmount += commission;
+    }
+
     await sponsor.save();
+
     splitCommissions(sponsor, amount, levels - 1, percentages.slice(1));
   } else {
     return;
@@ -459,6 +466,9 @@ const splitCommissions = async (user, amount, levels, percentages) => {
 // Verify user API
 export const verifyUser = asyncHandler(async (req, res) => {
   const userId = req.user._id;
+
+  // Send the original amount or the package selected also inorder detect the package.
+  
 
   const { amount } = req.body;
 

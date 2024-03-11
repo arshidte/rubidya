@@ -92,7 +92,6 @@ const Sidebar = () => {
                                     <li className="nav-item">
                                         <NavLink to="/" className="group">
                                             <div className="flex items-center">
-                                                <IconMenuChat className="group-hover:!text-primary shrink-0" />
                                                 <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">{t('Dashboard')}</span>
                                             </div>
                                         </NavLink>
@@ -100,7 +99,6 @@ const Sidebar = () => {
                                     <li className="nav-item">
                                         <NavLink to="/all-members" className="group">
                                             <div className="flex items-center">
-                                                <IconMenuChat className="group-hover:!text-primary shrink-0" />
                                                 <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">{t('All Members')}</span>
                                             </div>
                                         </NavLink>
@@ -108,8 +106,14 @@ const Sidebar = () => {
                                     <li className="nav-item">
                                         <NavLink to="/level-configs" className="group">
                                             <div className="flex items-center">
-                                                <IconMenuChat className="group-hover:!text-primary shrink-0" />
                                                 <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">{t('Level Configurations')}</span>
+                                            </div>
+                                        </NavLink>
+                                    </li>
+                                    <li className="nav-item">
+                                        <NavLink to="/manage-packages" className="group">
+                                            <div className="flex items-center">
+                                                <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">{t('Manage Packages')}</span>
                                             </div>
                                         </NavLink>
                                     </li>

@@ -5,7 +5,6 @@ import { protect } from "../middleware/authMiddleware.js";
 import {
   addPayId,
   changePassword,
-  // clearWalletAmount,
   deductRubideum,
   getDirectReferredUsers,
   getMedia,
@@ -22,10 +21,16 @@ import {
   verifyOTPForForget,
   verifyUser,
 } from "../controllers/userController.js";
+
 import {
   resizeAndCompressImage,
   upload,
 } from "../middleware/uploadMiddleware.js";
+
+import {
+  getAllPackages,
+  selectPackage,
+} from "../controllers/packageController.js";
 
 router.route("/").post(protect, registerUser);
 router.route("/add-user-by-refferal").post(registerUserByReferral);
@@ -68,14 +73,16 @@ router.route("/get-direct-refferals").get(protect, getDirectReferredUsers);
 // Get refferal tree count
 router.route("/get-refferal-tree-count").get(protect, refferalTreeCount);
 
-// Clear the wallet
-// router.route("/clear-wallet").get(protect, clearWalletAmount);
-
 // Calculate Rubideum
 router.route("/deduct-rubideum").post(protect, deductRubideum);
 
 // Sync unrealised to rubideum wallet
-router.route('/sync-wallet').get(protect, syncWallet);
+router.route("/sync-wallet").get(protect, syncWallet);
 
+// Get all packages
+router.route("/get-packages").get(protect, getAllPackages);
+
+// Select the package
+router.route("/select-package").post(protect, selectPackage);
 
 export default router;

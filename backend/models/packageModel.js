@@ -10,9 +10,19 @@ const packageSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    users: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+    users: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    memberProfit: {
+      type: Number,
+      default: 0,
+    },
+    packageSlug: {
+      type: String,
+      required: true,
     },
   },
   {

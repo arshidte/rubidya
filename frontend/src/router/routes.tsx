@@ -2,6 +2,7 @@ import { lazy } from 'react';
 import AllMembers from '../pages/DataTables/AllMembers';
 import LevelConfig from '../pages/LevelConfig';
 import Register from '../pages/Authentication/Register';
+import ManagePackages from '../pages/ManagePackages';
 const IndexSales = lazy(() => import('../pages/Indexsales'));
 const Index = lazy(() => import('../pages/Index'));
 const Analytics = lazy(() => import('../pages/Analytics'));
@@ -127,6 +128,10 @@ const routes = [
         path: '/register/:userId',
         element: <Register />,
         layout: 'blank',
+    },
+    {
+        path: '/manage-packages',
+        element: <ManagePackages />,
     },
     // analytics page
     {

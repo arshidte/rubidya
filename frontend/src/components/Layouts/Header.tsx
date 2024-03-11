@@ -193,6 +193,15 @@ const Header = () => {
                             </button>
                         </NavLink>
                     </li>
+                    <li className="menu nav-item relative">
+                        <NavLink to="/manage-packages">
+                            <button type="button" className="nav-link">
+                                <div className="flex items-center">
+                                    <span className="px-1">{t('Manage Packages')}</span>
+                                </div>
+                            </button>
+                        </NavLink>
+                    </li>
                 </ul>
             </div>
         </header>

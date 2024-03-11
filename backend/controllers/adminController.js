@@ -100,3 +100,8 @@ export const getUsersCount = asyncHandler(async (req, res) => {
     res.status(404).json({ sts: "00", msg: "No users found" });
   }
 });
+
+// Split profit to users in prime and golder membership
+export const splitProfit = asyncHandler(async (req, res) => {
+  
+});
