@@ -200,10 +200,11 @@ export const verifyOTP = asyncHandler(async (req, res) => {
         if (!validOTP) {
           throw new Error("Invalid OTP code passed!");
         } else {
-          const updatedUser = User.updateOne(
+          const updatedUser = await User.updateOne(
             { _id: userId },
             { $set: { isOTPVerified: true } }
           );
+
           if (updatedUser) {
             const deleteOTP = await UserOTPVerification.deleteMany({ userId });
 
@@ -467,14 +468,13 @@ const splitCommissions = async (user, amount, levels, percentages) => {
 export const verifyUser = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
-  // Send the original amount or the package selected also inorder detect the package.
-  
+  // Send the original amount or the package selected also inorder to detect the package.
 
   const { amount } = req.body;
 
   if (!amount) {
     res.status(400);
-    throw new Error("Please send the amount");
+    throw new Error("Please send the amount and package");
   }
 
   const user = await User.findById(userId);
@@ -508,7 +508,11 @@ export const verifyUser = asyncHandler(async (req, res) => {
 
     const updatedUser = await user.save();
 
+    
     if (updatedUser) {
+      // Get the count of verified users
+      const sponsorId = user.sponsor;
+
       res.status(200).json({ sts: "01", msg: "User verified successfully" });
     } else {
       res.status(400).json({ sts: "00", msg: "User not verified" });

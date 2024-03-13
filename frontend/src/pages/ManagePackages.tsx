@@ -1,9 +1,296 @@
-import React from 'react'
+import { DataTable } from 'mantine-datatable';
+import { useEffect, useState, Fragment } from 'react';
+import { setPageTitle } from '../store/themeConfigSlice';
+import { useAppDispatch, useAppSelector } from '../store';
+import { addPackage, getPackages } from '../store/packageSlice';
+
+import { Dialog, Transition, Tab } from '@headlessui/react';
 
 const ManagePackages = () => {
-  return (
-    <div>ManagePackages</div>
-  )
-}
+    const dispatch = useAppDispatch();
 
-export default ManagePackages
+    const { loading, data: rowData, error } = useAppSelector((state: any) => state.getPackage);
+    const { data: newPackageData } = useAppSelector((state: any) => state.addPackage);
+
+    const [modal21, setModal21] = useState(false);
+    const [modal22, setModal22] = useState(false);
+
+    const [editPackageId, setEditPackageId] = useState('');
+
+    const PAGE_SIZES = [10, 20, 30, 50, 100];
+
+    useEffect(() => {
+        if (rowData) {
+            setInitialRecords(rowData.packages);
+        }
+    }, [rowData]);
+
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
+    const [initialRecords, setInitialRecords] = useState([]);
+    const [recordsData, setRecordsData] = useState(initialRecords);
+
+    const [packageName, setPackageName] = useState('');
+    const [amount, setAmount] = useState('');
+    const [memberProfit, setMemberProfit] = useState('');
+
+    const [editPackageName, setEditPackageName] = useState('');
+    const [editAmount, setEditAmount] = useState('');
+    const [editMemberProfit, setEditMemberProfit] = useState('');
+
+    const [search, setSearch] = useState('');
+
+    useEffect(() => {
+        dispatch(setPageTitle('Manage Packages'));
+    }, []);
+
+    useEffect(() => {
+        dispatch(getPackages());
+        if (rowData) {
+            setInitialRecords(rowData.packages);
+        }
+    }, [dispatch]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [pageSize]);
+
+    useEffect(() => {
+        const from = (page - 1) * pageSize;
+        const to = from + pageSize;
+        setRecordsData([...initialRecords.slice(from, to)]);
+    }, [page, pageSize, initialRecords, rowData]);
+
+    // useEffect(() => {
+    //     setInitialRecords(() => {
+    //         return rowData.packages.filter((item: any) => {
+    //             return (
+    //                 item.packageName.toLowerCase().includes(search.toLowerCase()) ||
+    //                 item.amount.toLowerCase().includes(search.toLowerCase())
+    //             );
+    //         });
+    //     });
+    //     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // }, [search]);
+
+    useEffect(() => {
+        if (newPackageData) {
+            setModal21(false);
+        }
+    }, [newPackageData]);
+
+    const submitHandler = () => {
+        if (packageName && amount) {
+            dispatch(addPackage({ packageName, amount, memberProfit }));
+        }
+    };
+
+    const editPackageHandler = (id: string) => {
+        setEditPackageId(id);
+        setModal22(true);
+    };
+
+    const submitEditHandler = () => {
+        if (editPackageId) {
+          
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="panel">
+                <div className="flex items-center justify-between mb-5">
+                    <h5 className="font-semibold text-lg dark:text-white-light">Manage Packages</h5>
+
+                    <div>
+                        <button type="button" onClick={() => setModal21(true)} className="btn btn-primary">
+                            Add New
+                        </button>
+                        {/* Add new package modal */}
+                        <Transition appear show={modal21} as={Fragment}>
+                            <Dialog
+                                as="div"
+                                open={modal21}
+                                onClose={() => {
+                                    setModal21(false);
+                                }}
+                            >
+                                <Transition.Child
+                                    as={Fragment}
+                                    enter="ease-out duration-300"
+                                    enterFrom="opacity-0"
+                                    enterTo="opacity-100"
+                                    leave="ease-in duration-200"
+                                    leaveFrom="opacity-100"
+                                    leaveTo="opacity-0"
+                                >
+                                    <div className="fixed inset-0" />
+                                </Transition.Child>
+                                <div id="register_modal" className="fixed inset-0 bg-[black]/60 z-[999] overflow-y-auto">
+                                    <div className="flex items-start justify-center min-h-screen px-4">
+                                        <Transition.Child
+                                            as={Fragment}
+                                            enter="ease-out duration-300"
+                                            enterFrom="opacity-0 scale-95"
+                                            enterTo="opacity-100 scale-100"
+                                            leave="ease-in duration-200"
+                                            leaveFrom="opacity-100 scale-100"
+                                            leaveTo="opacity-0 scale-95"
+                                        >
+                                            <Dialog.Panel className="panel border-0 py-1 px-4 rounded-lg overflow-hidden w-full max-w-sm my-8 text-black dark:text-white-dark">
+                                                <div className="flex items-center justify-between p-5 font-semibold text-lg dark:text-white">
+                                                    <h6>Add New Package</h6>
+                                                </div>
+                                                <div className="p-5">
+                                                    <form>
+                                                        <div className="mb-4">
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Package Name"
+                                                                value={packageName}
+                                                                onChange={(e: any) => setPackageName(e.target.value)}
+                                                                className="form-input"
+                                                                id="name"
+                                                                required
+                                                            />
+                                                        </div>
+                                                        <div className="relative mb-4">
+                                                            <input
+                                                                type="number"
+                                                                placeholder="Amount"
+                                                                value={amount}
+                                                                onChange={(e: any) => setAmount(e.target.value)}
+                                                                className="form-input"
+                                                                id="amount"
+                                                                required
+                                                            />
+                                                        </div>
+                                                        <div className="relative mb-4">
+                                                            <input
+                                                                type="number"
+                                                                placeholder="Member Profit Percentage"
+                                                                value={memberProfit}
+                                                                onChange={(e: any) => setMemberProfit(e.target.value)}
+                                                                className="form-input"
+                                                                id="password"
+                                                            />
+                                                        </div>
+                                                        <button type="button" onClick={submitHandler} className="btn btn-primary w-full">
+                                                            Submit
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </Dialog.Panel>
+                                        </Transition.Child>
+                                    </div>
+                                </div>
+                            </Dialog>
+                        </Transition>
+                        {/* Add new package modal */}
+                    </div>
+                </div>
+                <div className="datatables">
+                    <DataTable
+                        striped
+                        className="whitespace-nowrap table-striped"
+                        records={recordsData}
+                        columns={[
+                            { accessor: 'packageName', title: 'Package Name' },
+                            { accessor: 'amount', title: 'Amount' },
+                            { accessor: 'memberProfit', title: 'Member Profit' },
+                            {
+                                accessor: 'Actions',
+                                title: 'Wallet Amount',
+                                render: (packages: any) => (
+                                    <div className="space-x-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => editPackageHandler(packages._id)}
+                                            className="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 text-white p-2 rounded-lg"
+                                        >
+                                            Edit Package
+                                        </button>
+                                    </div>
+                                ),
+                            },
+                        ]}
+                        totalRecords={initialRecords.length}
+                        recordsPerPage={pageSize}
+                        page={page}
+                        onPageChange={(p) => setPage(p)}
+                        recordsPerPageOptions={PAGE_SIZES}
+                        onRecordsPerPageChange={setPageSize}
+                        minHeight={200}
+                        paginationText={({ from, to, totalRecords }) => `Showing  ${from} to ${to} of ${totalRecords} entries`}
+                    />
+                </div>
+                {/* Edit package modal */}
+                <Transition appear show={modal22} as={Fragment}>
+                    <Dialog
+                        as="div"
+                        open={modal22}
+                        onClose={() => {
+                            setModal22(false);
+                        }}
+                    >
+                        <Transition.Child
+                            as={Fragment}
+                            enter="ease-out duration-300"
+                            enterFrom="opacity-0"
+                            enterTo="opacity-100"
+                            leave="ease-in duration-200"
+                            leaveFrom="opacity-100"
+                            leaveTo="opacity-0"
+                        >
+                            <div className="fixed inset-0" />
+                        </Transition.Child>
+                        <div id="register_modal" className="fixed inset-0 bg-[black]/60 z-[999] overflow-y-auto">
+                            <div className="flex items-start justify-center min-h-screen px-4">
+                                <Transition.Child
+                                    as={Fragment}
+                                    enter="ease-out duration-300"
+                                    enterFrom="opacity-0 scale-95"
+                                    enterTo="opacity-100 scale-100"
+                                    leave="ease-in duration-200"
+                                    leaveFrom="opacity-100 scale-100"
+                                    leaveTo="opacity-0 scale-95"
+                                >
+                                    <Dialog.Panel className="panel border-0 py-1 px-4 rounded-lg overflow-hidden w-full max-w-sm my-8 text-black dark:text-white-dark">
+                                        <div className="flex items-center justify-between p-5 font-semibold text-lg dark:text-white">
+                                            <h6>Edit Package</h6>
+                                        </div>
+                                        <div className="p-5">
+                                            <form>
+                                                <div className="mb-4">
+                                                    <input type="text" placeholder="Package Name" onChange={(e: any) => setEditPackageName(e.target.value)} className="form-input" id="name" required />
+                                                </div>
+                                                <div className="relative mb-4">
+                                                    <input type="number" placeholder="Amount" onChange={(e: any) => setEditAmount(e.target.value)} className="form-input" id="amount" required />
+                                                </div>
+                                                <div className="relative mb-4">
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Member Profit Percentage"
+                                                        onChange={(e: any) => setEditMemberProfit(e.target.value)}
+                                                        className="form-input"
+                                                        id="password"
+                                                    />
+                                                </div>
+                                                <button type="button" onClick={submitEditHandler} className="btn btn-primary w-full">
+                                                    Submit
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </Dialog.Panel>
+                                </Transition.Child>
+                            </div>
+                        </div>
+                    </Dialog>
+                </Transition>
+                {/* Edit package modal */}
+            </div>
+        </div>
+    );
+};
+
+export default ManagePackages;
