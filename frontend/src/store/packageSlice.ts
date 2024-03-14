@@ -51,7 +51,6 @@ export const getPackagesSlice = createSlice({
 
 // Add new package
 export const addPackage = createAsyncThunk('addPackage', async (data: any) => {
-
     const token: any = localStorage.getItem('userInfo');
     const parsedData = JSON.parse(token);
 
@@ -99,5 +98,91 @@ export const addPackageSlice = createSlice({
     },
 });
 
+export const getPackageByIdAction = createAsyncThunk('getPackageById', async (data: any) => {
+    const token: any = localStorage.getItem('userInfo');
+    const parsedData = JSON.parse(token);
+
+    const packageId = data;
+
+    const config = {
+        headers: {
+            Authorization: `Bearer ${parsedData.access_token}`,
+            'content-type': 'application/json',
+        },
+    };
+
+    const response = await axios.post(`${URL}/api/users/get-package-by-id`, { packageId }, config);
+
+    return response.data;
+});
+
+export const getPackageByIdSlice = createSlice({
+    name: 'getPackageByIdSlice',
+    initialState: {
+        loading: false,
+        data: null,
+        error: '',
+    },
+    reducers: {},
+    extraReducers: (builder) => {
+        builder
+            .addCase(getPackageByIdAction.pending, (state: any) => {
+                state.loading = true;
+            })
+            .addCase(getPackageByIdAction.fulfilled, (state, action) => {
+                state.loading = false;
+                state.data = action.payload;
+            })
+            .addCase(getPackageByIdAction.rejected, (state, action) => {
+                state.loading = false;
+                console.error('Error', action.payload);
+            });
+    },
+});
+
+export const editPackage = createAsyncThunk('editPackage', async (data: any) => {
+    const token: any = localStorage.getItem('userInfo');
+    const parsedData = JSON.parse(token);
+
+    const { packageId, packageName, amount, memberProfit } = data;
+
+    const config = {
+        headers: {
+            Authorization: `Bearer ${parsedData.access_token}`,
+            'content-type': 'application/json',
+        },
+    };
+
+    const response = await axios.put(`${URL}/api/admin/edit-package`, { packageId, packageName, amount, memberProfit }, config);
+
+    return response.data;
+});
+
+export const editPackageSlice = createSlice({
+    name: 'editPackageSlice',
+    initialState: {
+        loading: false,
+        data: null,
+        error: '',
+    },
+    reducers: {},
+    extraReducers: (builder) => {
+        builder
+            .addCase(editPackage.pending, (state: any) => {
+                state.loading = true;
+            })
+            .addCase(editPackage.fulfilled, (state, action) => {
+                state.loading = false;
+                state.data = action.payload;
+            })
+            .addCase(editPackage.rejected, (state, action) => {
+                state.loading = false;
+                console.error('Error', action.payload);
+            });
+    },
+});
+
+export const editPackageReducer = editPackageSlice.reducer;
+export const getPackageByIdReducer = getPackageByIdSlice.reducer;
 export const addPackageReducer = addPackageSlice.reducer;
 export const getPackagesReducer = getPackagesSlice.reducer;

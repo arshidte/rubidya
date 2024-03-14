@@ -8,6 +8,7 @@ import {
   deductRubideum,
   getDirectReferredUsers,
   getMedia,
+  getStats,
   getUserProfile,
   loginUser,
   refferalTreeCount,
@@ -29,6 +30,7 @@ import {
 
 import {
   getAllPackages,
+  getPackageById,
   selectPackage,
 } from "../controllers/packageController.js";
 
@@ -82,7 +84,13 @@ router.route("/sync-wallet").get(protect, syncWallet);
 // Get all packages
 router.route("/get-packages").get(protect, getAllPackages);
 
+// Get package by ID
+router.route("/get-package-by-id").post(protect, getPackageById);
+
 // Select the package
 router.route("/select-package").post(protect, selectPackage);
+
+// Get all status
+router.route("/get-stats").get(protect, getStats);
 
 export default router;

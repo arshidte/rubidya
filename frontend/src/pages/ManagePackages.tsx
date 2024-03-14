@@ -2,15 +2,17 @@ import { DataTable } from 'mantine-datatable';
 import { useEffect, useState, Fragment } from 'react';
 import { setPageTitle } from '../store/themeConfigSlice';
 import { useAppDispatch, useAppSelector } from '../store';
-import { addPackage, getPackages } from '../store/packageSlice';
+import { addPackage, getPackageByIdAction, getPackages } from '../store/packageSlice';
 
 import { Dialog, Transition, Tab } from '@headlessui/react';
+import EditPackagePopup from '../components/EditPackagePopup';
 
 const ManagePackages = () => {
     const dispatch = useAppDispatch();
 
     const { loading, data: rowData, error } = useAppSelector((state: any) => state.getPackage);
     const { data: newPackageData } = useAppSelector((state: any) => state.addPackage);
+    const { data: editedPackageData } = useAppSelector((state: any) => state.editPackage);
 
     const [modal21, setModal21] = useState(false);
     const [modal22, setModal22] = useState(false);
@@ -34,12 +36,6 @@ const ManagePackages = () => {
     const [amount, setAmount] = useState('');
     const [memberProfit, setMemberProfit] = useState('');
 
-    const [editPackageName, setEditPackageName] = useState('');
-    const [editAmount, setEditAmount] = useState('');
-    const [editMemberProfit, setEditMemberProfit] = useState('');
-
-    const [search, setSearch] = useState('');
-
     useEffect(() => {
         dispatch(setPageTitle('Manage Packages'));
     }, []);
@@ -61,21 +57,10 @@ const ManagePackages = () => {
         setRecordsData([...initialRecords.slice(from, to)]);
     }, [page, pageSize, initialRecords, rowData]);
 
-    // useEffect(() => {
-    //     setInitialRecords(() => {
-    //         return rowData.packages.filter((item: any) => {
-    //             return (
-    //                 item.packageName.toLowerCase().includes(search.toLowerCase()) ||
-    //                 item.amount.toLowerCase().includes(search.toLowerCase())
-    //             );
-    //         });
-    //     });
-    //     // eslint-disable-next-line react-hooks/exhaustive-deps
-    // }, [search]);
-
     useEffect(() => {
         if (newPackageData) {
             setModal21(false);
+            dispatch(getPackages());
         }
     }, [newPackageData]);
 
@@ -90,11 +75,12 @@ const ManagePackages = () => {
         setModal22(true);
     };
 
-    const submitEditHandler = () => {
-        if (editPackageId) {
-          
+    useEffect(() => {
+        if (editedPackageData) {
+            setModal22(false);
+            dispatch(getPackages());
         }
-    };
+    }, [editedPackageData]);
 
     return (
         <div className="space-y-6">
@@ -224,70 +210,7 @@ const ManagePackages = () => {
                         paginationText={({ from, to, totalRecords }) => `Showing  ${from} to ${to} of ${totalRecords} entries`}
                     />
                 </div>
-                {/* Edit package modal */}
-                <Transition appear show={modal22} as={Fragment}>
-                    <Dialog
-                        as="div"
-                        open={modal22}
-                        onClose={() => {
-                            setModal22(false);
-                        }}
-                    >
-                        <Transition.Child
-                            as={Fragment}
-                            enter="ease-out duration-300"
-                            enterFrom="opacity-0"
-                            enterTo="opacity-100"
-                            leave="ease-in duration-200"
-                            leaveFrom="opacity-100"
-                            leaveTo="opacity-0"
-                        >
-                            <div className="fixed inset-0" />
-                        </Transition.Child>
-                        <div id="register_modal" className="fixed inset-0 bg-[black]/60 z-[999] overflow-y-auto">
-                            <div className="flex items-start justify-center min-h-screen px-4">
-                                <Transition.Child
-                                    as={Fragment}
-                                    enter="ease-out duration-300"
-                                    enterFrom="opacity-0 scale-95"
-                                    enterTo="opacity-100 scale-100"
-                                    leave="ease-in duration-200"
-                                    leaveFrom="opacity-100 scale-100"
-                                    leaveTo="opacity-0 scale-95"
-                                >
-                                    <Dialog.Panel className="panel border-0 py-1 px-4 rounded-lg overflow-hidden w-full max-w-sm my-8 text-black dark:text-white-dark">
-                                        <div className="flex items-center justify-between p-5 font-semibold text-lg dark:text-white">
-                                            <h6>Edit Package</h6>
-                                        </div>
-                                        <div className="p-5">
-                                            <form>
-                                                <div className="mb-4">
-                                                    <input type="text" placeholder="Package Name" onChange={(e: any) => setEditPackageName(e.target.value)} className="form-input" id="name" required />
-                                                </div>
-                                                <div className="relative mb-4">
-                                                    <input type="number" placeholder="Amount" onChange={(e: any) => setEditAmount(e.target.value)} className="form-input" id="amount" required />
-                                                </div>
-                                                <div className="relative mb-4">
-                                                    <input
-                                                        type="number"
-                                                        placeholder="Member Profit Percentage"
-                                                        onChange={(e: any) => setEditMemberProfit(e.target.value)}
-                                                        className="form-input"
-                                                        id="password"
-                                                    />
-                                                </div>
-                                                <button type="button" onClick={submitEditHandler} className="btn btn-primary w-full">
-                                                    Submit
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </Dialog.Panel>
-                                </Transition.Child>
-                            </div>
-                        </div>
-                    </Dialog>
-                </Transition>
-                {/* Edit package modal */}
+                {modal22 && <EditPackagePopup id={editPackageId} modal22={modal22} setModal22={setModal22} />}
             </div>
         </div>
     );

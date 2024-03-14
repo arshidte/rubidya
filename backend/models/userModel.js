@@ -52,6 +52,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isAdmin: {
+      type: Boolean,
+      default: false,
+    },
     walletAmount: {
       type: Number,
       double: true,
@@ -104,7 +108,7 @@ const userSchema = new mongoose.Schema(
     profitSplitting: {
       type: Boolean,
       default: false,
-    }
+    },
   },
   {
     timestamps: true,

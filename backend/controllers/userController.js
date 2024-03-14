@@ -11,6 +11,7 @@ import { transporter } from "../config/nodeMailer.js";
 import UserOTPVerification from "../models/otpModel.js";
 import { Router } from "express";
 import axios from "axios";
+import Package from "../models/packageModel.js";
 
 const generateRandomString = () => {
   const baseString = "RBD";
@@ -508,7 +509,6 @@ export const verifyUser = asyncHandler(async (req, res) => {
 
     const updatedUser = await user.save();
 
-    
     if (updatedUser) {
       // Get the count of verified users
       const sponsorId = user.sponsor;
@@ -766,5 +766,48 @@ export const syncWallet = asyncHandler(async (req, res) => {
     }
   } else {
     res.status(400).json({ sts: "00", msg: "Please login first" });
+  }
+});
+
+// Get stats of number of users in each plan and the total amount to distribute
+export const getStats = asyncHandler(async (req, res) => {
+  // Get the number of users in prime membership
+  const primeUsersCount = await Package.aggregate([
+    { $match: { packageSlug: "prime-membership" } },
+    { $project: { usersCount: { $size: "$users" } } },
+  ]);
+
+  const primeCount = primeUsersCount[0].usersCount;
+
+  // Get the number of users in gold membership
+  const goldUsersCount = await Package.aggregate([
+    { $match: { packageSlug: "gold-membership" } },
+    { $project: { usersCount: { $size: "$users" } } },
+  ]);
+
+  const goldCount = goldUsersCount[0].usersCount;
+
+  const prime = await Package.findOne({ packageSlug: "prime-membership" });
+  const gold = await Package.findOne({ packageSlug: "gold-membership" });
+
+  const primePercent = prime.memberProfit;
+  const goldPercent = gold.memberProfit;
+
+  const user = await User.findOne({ isAdmin: true });
+
+  const primeAmount = (user.overallAmount * (primePercent / 100)).toFixed(2);
+  const goldAmount = (user.overallAmount * (goldPercent / 100)).toFixed(2);
+
+  if (primeAmount && goldAmount) {
+    res.status(200).json({
+      sts: "01",
+      msg: "Stats fetched successfully",
+      primeCount,
+      goldCount,
+      primeAmount,
+      goldAmount,
+    });
+  } else {
+    res.status(400).json({ sts: "00", msg: "Error in fetching stats" });
   }
 });

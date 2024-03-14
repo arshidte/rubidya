@@ -14,7 +14,7 @@ export const addPackage = asyncHandler(async (req, res) => {
     memberProfit,
     packageSlug,
   });
-  
+
   if (addPackage) {
     res.status(201).json({
       message: "Package added successfully",
@@ -69,6 +69,19 @@ export const getAllPackages = asyncHandler(async (req, res) => {
   }
 });
 
+// Get package by ID
+export const getPackageById = asyncHandler(async (req, res) => {
+  const { packageId } = req.body;
+
+  const singlePackage = await Package.findById(packageId);
+
+  if (singlePackage) {
+    res.status(200).json({ sts: "01", msg: "Success", singlePackage });
+  } else {
+    res.status(404).json({ sts: "00", msg: "No package found" });
+  }
+});
+
 // Select a package
 export const selectPackage = asyncHandler(async (req, res) => {
   const { packageId } = req.body;
@@ -107,6 +120,3 @@ export const selectPackage = asyncHandler(async (req, res) => {
     });
   }
 });
-
-// Split profit to users of Prime and Golder membership
-export const splitProfit = asyncHandler(async (req, res) => {});
