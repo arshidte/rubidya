@@ -811,3 +811,20 @@ export const getStats = asyncHandler(async (req, res) => {
     res.status(400).json({ sts: "00", msg: "Error in fetching stats" });
   }
 });
+
+export const sendOTPTest = asyncHandler(async (req, res) => {
+  const response = await axios.get(
+    "https://otp2.aclgateway.com/OTP_ACL_Web/OtpRequestListener?enterpriseid=stplotp&subEnterpriseid=stplotp&pusheid=stplotp&pushepwd=stpl_01&msisdn=9744241239&sender=HYBERE&msgtext=Welcome%20to%20Rubidya!%20Your%20OTP%20for%20registration%20is%20%2012345.%20Please%20enter%20this%20code%20to%20complete%20your%20registration&dpi=1101544370000033504&dtm=1107170911722074274"
+  );
+
+  const dataFetched = response.data;
+
+  console.log(dataFetched);
+
+  if (dataFetched) {
+    res.status(200).json({ msg: "OTP sent successfully" });
+  } else {
+    res.status(400).json({ msg: "Error in sending OTP" });
+  }
+  
+});

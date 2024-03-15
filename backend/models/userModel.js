@@ -109,6 +109,9 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    packageName: {
+      type: String,
+    },
   },
   {
     timestamps: true,

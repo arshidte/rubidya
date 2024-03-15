@@ -1,5 +1,6 @@
 import asyncHandler from "../middleware/asyncHandler.js";
 import Level from "../models/levelModel.js";
+import Package from "../models/packageModel.js";
 import User from "../models/userModel.js";
 import jwt from "jsonwebtoken";
 
@@ -101,7 +102,46 @@ export const getUsersCount = asyncHandler(async (req, res) => {
   }
 });
 
-// Split profit to users in prime and golder membership
+// Split profit to users in prime and gold membership
 export const splitProfit = asyncHandler(async (req, res) => {
+  const primePercent = await Package.findOne({
+    packageSlug: "prime-membership",
+  }).select("memberProfit");
+
+  const goldPercent = await Package.findOne({
+    packageSlug: "gold-membership",
+  }).select("memberProfit");
+
+  // Give commission to prime users
+  const primeUsers = await User.find({ packageName: "prime-membership" });
+
+  if (primeUsers.length > 0) {
+
+    const profitPerPerson = (primeUsers.length * (primePercent / 100)).toFixed(
+      2
+    );
+
+    if (profitPerPerson > 0) {
+
+      primeUsers.forEach(async (user) => {
+        user.walletAmount += profitPerPerson;
+        user.totalMemberProfit += profitPerPerson;
+        user.transactions.push({
+          type: "monthly-profit",
+          amount: profitPerPerson,
+          description: "Monthly profit for prime membership",
+        });
+        await user.save();
+      });
+
+    }
+  }
+
+  // Give commission to gold users
+  const goldUsers = await User.find({ packageName: "gold-membership" });
+
+  if (goldUsers.length > 0) {
+    const profitPerPerson = (goldUsers.length * (goldPercent / 100)).toFixed(2);
+  }
   
 });

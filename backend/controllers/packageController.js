@@ -33,13 +33,18 @@ export const editPackage = asyncHandler(async (req, res) => {
   const selectedPackage = await Package.findById(packageId);
 
   if (selectedPackage) {
+    if (packageName.length > 0) {
+      const packageSlug = packageName.toLowerCase().split(" ").join("-");
+      selectedPackage.packageSlug = packageSlug || selectedPackage.packageSlug;
+    }
+
     selectedPackage.packageName = packageName || selectedPackage.packageName;
     selectedPackage.amount = amount || selectedPackage.amount;
     selectedPackage.memberProfit = memberProfit || selectedPackage.memberProfit;
 
-    const updatedUpdatedPackage = await selectedPackage.save();
+    const updatedPackage = await selectedPackage.save();
 
-    if (updatedUpdatedPackage) {
+    if (updatedPackage) {
       res.status(201).json({
         sts: "01",
         msg: "Package updated successfully",
@@ -56,6 +61,7 @@ export const editPackage = asyncHandler(async (req, res) => {
       msg: "Package not updated",
     });
   }
+  
 });
 
 // Get all packages
@@ -93,7 +99,7 @@ export const selectPackage = asyncHandler(async (req, res) => {
   // Update the user with the package
   const updatedUser = await User.findByIdAndUpdate(userId, {
     packageSelected: packageId,
-    packageName: selectedPackage.packageName,
+    packageName: selectedPackage.packageSlug,
   });
 
   if (updatedUser) {
