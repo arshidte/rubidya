@@ -1,6 +1,7 @@
 import asyncHandler from "../middleware/asyncHandler.js";
 import Level from "../models/levelModel.js";
 import Package from "../models/packageModel.js";
+import Revenue from "../models/revenueModel.js";
 import User from "../models/userModel.js";
 import jwt from "jsonwebtoken";
 
@@ -104,13 +105,19 @@ export const getUsersCount = asyncHandler(async (req, res) => {
 
 // Split profit to users in prime and gold membership
 export const splitProfit = asyncHandler(async (req, res) => {
-  const primePercent = await Package.findOne({
-    packageSlug: "prime-membership",
-  }).select("memberProfit");
 
-  const goldPercent = await Package.findOne({
+  const primeAmount = await Package.findOne({
+    packageSlug: "prime-membership",
+  }).select("amount");
+
+  const goldAmount = await Package.findOne({
     packageSlug: "gold-membership",
-  }).select("memberProfit");
+  }).select("amount");
+
+  // Get the total amount reached to company (Amount got from packages (500/5000/25000))
+  const totalAmount = await Revenue.findOne({});
+  
+  
 
   // Give commission to prime users
   const primeUsers = await User.find({ packageName: "prime-membership" });

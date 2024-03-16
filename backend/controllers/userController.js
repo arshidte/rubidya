@@ -12,6 +12,7 @@ import UserOTPVerification from "../models/otpModel.js";
 import { Router } from "express";
 import axios from "axios";
 import Package from "../models/packageModel.js";
+import Revenue from "../models/revenueModel.js";
 
 const generateRandomString = () => {
   const baseString = "RBD";
@@ -466,20 +467,100 @@ const splitCommissions = async (user, amount, levels, percentages) => {
 };
 
 // Verify user API
+// export const verifyUser = asyncHandler(async (req, res) => {
+//   const userId = req.user._id;
+
+//   // Send the original amount or the package selected also inorder to detect the package.
+
+//   const { amount } = req.body;
+
+//   if (!amount) {
+//     res.status(400);
+//     throw new Error("Please send the amount and package");
+//   }
+
+//   const user = await User.findById(userId);
+
+//   if (user) {
+//     if (user.isAccountVerified) {
+//       res.status(400);
+//       throw new Error("User already verified!");
+//     }
+
+//     user.isAccountVerified = true;
+
+//     // Show amount spend transaction in user's transactions
+//     // user.transactions.push({
+//     //   amount,
+//     //   kind: "premium",
+//     //   fromWhom: "self",
+//     //   status: "approved",
+//     // });
+
+//     const level = await Level.findOne();
+
+//     const percentageArray = level.levelPercentages;
+
+//     const percentages = [];
+//     percentageArray.map((item) => {
+//       percentages.push(item.percentage);
+//     });
+
+//     await splitCommissions(user, amount, percentages.length, percentages);
+
+//     const updatedUser = await user.save();
+
+//     if (updatedUser) {
+//       // Get the count of verified users
+//       const sponsorId = user.sponsor;
+
+//       res.status(200).json({ sts: "01", msg: "User verified successfully" });
+//     } else {
+//       res.status(400).json({ sts: "00", msg: "User not verified" });
+//     }
+//   } else {
+//     res.status(404).json({ sts: "00", msg: "User not found" });
+//   }
+// });
+
+// Verify user API
 export const verifyUser = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
   // Send the original amount or the package selected also inorder to detect the package.
 
-  const { amount } = req.body;
+  const { amount, packageId } = req.body;
 
-  if (!amount) {
+  if (!amount || !packageId) {
     res.status(400);
     throw new Error("Please send the amount and package");
   }
 
-  const user = await User.findById(userId);
+  // Get the package
+  const selectedPackage = await Package.findById(packageId);
 
+  const revenue = await Revenue.findOne({});
+
+  let totalAmount = 0;
+  if (revenue) {
+    const amountToadd = revenue.totalRevenue + amount;
+    totalAmount = amountToadd;
+  } else {
+    totalAmount = amount;
+  }
+
+  const updatedRevenue = await Revenue.findOneAndUpdate(
+    {},
+    { $set: { totalRevenue: totalAmount, monthlyRevenue: totalAmount } },
+    { new: true, upsert: true }
+  );
+
+  if (!selectedPackage) {
+    res.status(400);
+    throw new Error("Please select a valid package");
+  }
+
+  const user = await User.findById(userId);
   if (user) {
     if (user.isAccountVerified) {
       res.status(400);
@@ -487,6 +568,13 @@ export const verifyUser = asyncHandler(async (req, res) => {
     }
 
     user.isAccountVerified = true;
+    user.packageSelected = packageId;
+    user.packageName = selectedPackage.packageSlug;
+
+    // Push the user to the users in package
+    const updateSelectedPackage = await Package.findByIdAndUpdate(packageId, {
+      $push: { users: userId },
+    });
 
     // Show amount spend transaction in user's transactions
     // user.transactions.push({
@@ -596,7 +684,7 @@ export const addPayId = asyncHandler(async (req, res) => {
   }
 });
 
-// Get the direct reffered users' list
+// Get the direct referred users' list
 export const getDirectReferredUsers = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
@@ -619,7 +707,7 @@ export const getDirectReferredUsers = asyncHandler(async (req, res) => {
   }
 });
 
-// Get the refferal tree users count
+// Get the referral tree users count
 async function getReferralTreeCount(user) {
   let count = 0;
 
@@ -668,7 +756,7 @@ export const changePassword = asyncHandler(async (req, res) => {
   }
 });
 
-// Calculate Rubideum for 500
+// Calculate Rubideum
 export const deductRubideum = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
@@ -819,12 +907,10 @@ export const sendOTPTest = asyncHandler(async (req, res) => {
 
   const dataFetched = response.data;
 
-  console.log(dataFetched);
-
   if (dataFetched) {
     res.status(200).json({ msg: "OTP sent successfully" });
   } else {
     res.status(400).json({ msg: "Error in sending OTP" });
   }
-  
+
 });
