@@ -5,6 +5,7 @@ import {
   getAllLevelPercentages,
   getAllusers,
   getUsersCount,
+  splitProfit,
 } from "../controllers/adminController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import { addPackage, editPackage } from "../controllers/packageController.js";
@@ -30,5 +31,8 @@ router.route("/add-package").post(protect, addPackage);
 
 // Edit package
 router.route("/edit-package").put(protect, editPackage);
+
+// Split profit
+router.route("/split-profit").get(protect, splitProfit);
 
 export default router;

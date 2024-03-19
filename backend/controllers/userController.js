@@ -24,10 +24,10 @@ function generateOTP() {
   // Generate a random number between 10000 and 99999 (inclusive)
   const randomNumber = Math.floor(Math.random() * 9000) + 1000;
   return randomNumber;
-}
+};
 
 // Send OTP verification email
-const sendOTP = async ({ _id, email }, res) => {
+const sendOTP = async ({ _id, email, countryCode, phone }, res) => {
   try {
     const OTP = generateOTP();
 
@@ -53,18 +53,35 @@ const sendOTP = async ({ _id, email }, res) => {
     const newOTP = await newOTPVerification.save();
 
     if (newOTP) {
-      await transporter.sendMail(mailOptions);
+      if (countryCode == 91) {
+
+        const response = await axios.get(
+          `https://otp2.aclgateway.com/OTP_ACL_Web/OtpRequestListener?enterpriseid=stplotp&subEnterpriseid=stplotp&pusheid=stplotp&pushepwd=stpl_01&msisdn=${phone}&sender=HYBERE&msgtext=Welcome%20to%20Rubidya!%20Your%20OTP%20for%20registration%20is%20%20${OTP}.%20Please%20enter%20this%20code%20to%20complete%20your%20registration&dpi=1101544370000033504&dtm=1107170911722074274`
+        );
+        console.log(`SMS OTP response: ${response.data}`);
+
+        await transporter.sendMail(mailOptions);
+
+      } else {
+
+        await transporter.sendMail(mailOptions);
+
+      }
 
       // Check if 'res' is defined before calling 'json'
       if (res && typeof res.json === "function") {
+
         res.status(200).json({
           status: "PENDING",
           message: "Verification OTP email sent",
           userId: _id,
           email,
         });
+
       } else {
+
         console.error("Response object is not properly defined.");
+        
       }
     } else {
       res.status(400);
@@ -167,7 +184,10 @@ export const registerUser = asyncHandler(async (req, res) => {
     });
 
     if (createUser) {
-      sendOTP({ _id: createUser._id, email: createUser.email }, res);
+      sendOTP(
+        { _id: createUser._id, email: createUser.email, countryCode, phone },
+        res
+      );
     } else {
       res.status(400);
       throw new Error("Invalid user data");
@@ -881,10 +901,13 @@ export const getStats = asyncHandler(async (req, res) => {
   const primePercent = prime.memberProfit;
   const goldPercent = gold.memberProfit;
 
-  const user = await User.findOne({ isAdmin: true });
+  // Get revenue
+  const revenue = await Revenue.find({});
 
-  const primeAmount = (user.overallAmount * (primePercent / 100)).toFixed(2);
-  const goldAmount = (user.overallAmount * (goldPercent / 100)).toFixed(2);
+  const primeAmount = (revenue.monthlyRevenue * (primePercent / 100)).toFixed(
+    2
+  );
+  const goldAmount = (revenue.monthlyRevenue * (goldPercent / 100)).toFixed(2);
 
   if (primeAmount && goldAmount) {
     res.status(200).json({
@@ -912,5 +935,4 @@ export const sendOTPTest = asyncHandler(async (req, res) => {
   } else {
     res.status(400).json({ msg: "Error in sending OTP" });
   }
-
 });

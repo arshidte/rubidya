@@ -105,50 +105,98 @@ export const getUsersCount = asyncHandler(async (req, res) => {
 
 // Split profit to users in prime and gold membership
 export const splitProfit = asyncHandler(async (req, res) => {
-
-  const primeAmount = await Package.findOne({
-    packageSlug: "prime-membership",
-  }).select("amount");
-
-  const goldAmount = await Package.findOne({
-    packageSlug: "gold-membership",
-  }).select("amount");
-
   // Get the total amount reached to company (Amount got from packages (500/5000/25000))
-  const totalAmount = await Revenue.findOne({});
-  
-  
+  const totalAmount = await Revenue.findOne({}).select("monthlyRevenue");
+
+  // Get the prime users' member profit percentage
+  const primeMemberProfit = await Package.findOne({
+    packageSlug: "prime-membership",
+  }).select("memberProfit");
 
   // Give commission to prime users
   const primeUsers = await User.find({ packageName: "prime-membership" });
 
-  if (primeUsers.length > 0) {
+  if (totalAmount.monthlyRevenue) {
+    if (primeUsers.length > 0) {
+      // Total profit to share to prime users
+      const primeProfit = (
+        totalAmount.monthlyRevenue *
+        (primeMemberProfit.memberProfit / 100)
+      ).toFixed(2);
 
-    const profitPerPerson = (primeUsers.length * (primePercent / 100)).toFixed(
-      2
-    );
+      if (primeProfit > 0) {
+        // Profit per person
+        const profitPerPerson = primeProfit / primeUsers.length;
 
-    if (profitPerPerson > 0) {
-
-      primeUsers.forEach(async (user) => {
-        user.walletAmount += profitPerPerson;
-        user.totalMemberProfit += profitPerPerson;
-        user.transactions.push({
-          type: "monthly-profit",
-          amount: profitPerPerson,
-          description: "Monthly profit for prime membership",
-        });
-        await user.save();
-      });
-
+        if (profitPerPerson > 0) {
+          primeUsers.forEach(async (user) => {
+            user.walletAmount += profitPerPerson;
+            user.totalMemberProfit += profitPerPerson;
+            user.transactions.push({
+              type: "monthly-profit",
+              amount: profitPerPerson,
+              description: "Monthly profit for prime membership",
+            });
+            await user.save();
+          });
+        }
+      }
     }
-  }
 
-  // Give commission to gold users
-  const goldUsers = await User.find({ packageName: "gold-membership" });
+    // Get the gold users' member profit percentage
+    const goldMemberProfit = await Package.findOne({
+      packageSlug: "gold-membership",
+    }).select("memberProfit");
 
-  if (goldUsers.length > 0) {
-    const profitPerPerson = (goldUsers.length * (goldPercent / 100)).toFixed(2);
+    // Give commission to gold users
+    const goldUsers = await User.find({ packageName: "gold-membership" });
+
+    if (goldUsers.length > 0) {
+      // Total profit to share to gold users
+      const goldProfit = (
+        totalAmount.monthlyRevenue *
+        (goldMemberProfit.memberProfit / 100)
+      ).toFixed(2);
+
+      if (goldProfit > 0) {
+        // Profit per person
+        const profitPerPerson = goldProfit / goldUsers.length;
+
+        if (profitPerPerson > 0) {
+          goldUsers.forEach(async (user) => {
+            user.walletAmount += profitPerPerson;
+            user.totalMemberProfit += profitPerPerson;
+            user.transactions.push({
+              type: "monthly-profit",
+              amount: profitPerPerson,
+              description: "Monthly profit for gold membership",
+            });
+            await user.save();
+          });
+        }
+      }
+    }
+
+    if (primeUsers.length > 0 || goldUsers.length > 0) {
+      totalAmount.monthlyRevenue = 0;
+      const updateMonthlyRevenue = await totalAmount.save();
+      if (updateMonthlyRevenue) {
+        res.status(201).json({
+          message: "Profit splitted successfully",
+        });
+      } else {
+        res.status(400).json({
+          message: "Error updating monthly revenue",
+        });
+      }
+    } else {
+      res.status(400).json({
+        message: "Profit not splitted",
+      });
+    }
+  } else {
+    res.status(400).json({
+      message: "No monthly revenue found",
+    });
   }
-  
 });
