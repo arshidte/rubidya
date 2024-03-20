@@ -24,7 +24,7 @@ function generateOTP() {
   // Generate a random number between 10000 and 99999 (inclusive)
   const randomNumber = Math.floor(Math.random() * 9000) + 1000;
   return randomNumber;
-};
+}
 
 // Send OTP verification email
 const sendOTP = async ({ _id, email, countryCode, phone }, res) => {
@@ -54,34 +54,26 @@ const sendOTP = async ({ _id, email, countryCode, phone }, res) => {
 
     if (newOTP) {
       if (countryCode == 91) {
+        await transporter.sendMail(mailOptions);
 
         const response = await axios.get(
           `https://otp2.aclgateway.com/OTP_ACL_Web/OtpRequestListener?enterpriseid=stplotp&subEnterpriseid=stplotp&pusheid=stplotp&pushepwd=stpl_01&msisdn=${phone}&sender=HYBERE&msgtext=Welcome%20to%20Rubidya!%20Your%20OTP%20for%20registration%20is%20%20${OTP}.%20Please%20enter%20this%20code%20to%20complete%20your%20registration&dpi=1101544370000033504&dtm=1107170911722074274`
         );
         console.log(`SMS OTP response: ${response.data}`);
-
-        await transporter.sendMail(mailOptions);
-
       } else {
-
         await transporter.sendMail(mailOptions);
-
       }
 
       // Check if 'res' is defined before calling 'json'
       if (res && typeof res.json === "function") {
-
         res.status(200).json({
           status: "PENDING",
           message: "Verification OTP email sent",
           userId: _id,
           email,
         });
-
       } else {
-
         console.error("Response object is not properly defined.");
-        
       }
     } else {
       res.status(400);
@@ -93,7 +85,7 @@ const sendOTP = async ({ _id, email, countryCode, phone }, res) => {
 };
 
 // Send OTP for forget password
-const sendOTPForget = async ({ email }, res) => {
+const sendOTPForget = async ({ email, countryCode, phone }, res) => {
   try {
     const OTP = generateOTP();
 
@@ -119,7 +111,16 @@ const sendOTPForget = async ({ email }, res) => {
     const newOTP = await newOTPVerification.save();
 
     if (newOTP) {
-      await transporter.sendMail(mailOptions);
+      if (countryCode == 91) {
+        await transporter.sendMail(mailOptions);
+
+        const response = await axios.get(
+          `https://otp2.aclgateway.com/OTP_ACL_Web/OtpRequestListener?enterpriseid=stplotp&subEnterpriseid=stplotp&pusheid=stplotp&pushepwd=stpl_01&msisdn=${phone}&sender=HYBERE&msgtext=Hello%20from%20Rubidya.%20Your%20OTP%20for%20password%20reset%20is%20${OTP}.%20Enter%20this%20code%20to%20securely%20reset%20your%20password&dpi=1101544370000033504&dtm=1107170911810846940`
+        );
+        console.log(`SMS OTP response: ${response.data}`);
+      } else {
+        await transporter.sendMail(mailOptions);
+      }
 
       // Check if 'res' is defined before calling 'json'
       if (res && typeof res.json === "function") {
@@ -195,7 +196,7 @@ export const registerUser = asyncHandler(async (req, res) => {
   }
 });
 
-// Verify OTP Email
+// Verify OTP Email/SMS
 export const verifyOTP = asyncHandler(async (req, res) => {
   const { OTP, userId } = req.body;
 
@@ -253,13 +254,23 @@ export const verifyOTP = asyncHandler(async (req, res) => {
 export const resendOTP = asyncHandler(async (req, res) => {
   const { email, userId } = req.body;
 
+  const user = await User.findById(userId);
+
   if (!userId || !email) {
     res.status(400);
     throw new Error("Please enter all the required fields");
   } else {
     const deleteExistingOTP = await UserOTPVerification.deleteMany({ userId });
     if (deleteExistingOTP) {
-      sendOTP({ _id: userId, email }, res);
+      sendOTP(
+        {
+          _id: userId,
+          email,
+          countryCode: user.countryCode,
+          phone: user.phone,
+        },
+        res
+      );
     } else {
       res.status(400);
       throw new Error("Error deleting existing OTP record");
@@ -280,7 +291,14 @@ export const sendOTPforForget = asyncHandler(async (req, res) => {
     if (existEmail) {
       const deleteExistingOTP = await UserOTPVerification.deleteMany({ email });
       if (deleteExistingOTP) {
-        sendOTPForget({ email }, res);
+        sendOTPForget(
+          {
+            email,
+            countryCode: existEmail.countryCode,
+            phone: existEmail.phone,
+          },
+          res
+        );
       } else {
         res.status(400);
         throw new Error("Error deleting existing OTP record");
