@@ -650,7 +650,9 @@ export const verifyUser = asyncHandler(async (req, res) => {
 
 // Get user profile
 export const getUserProfile = asyncHandler(async (req, res) => {
+
   const userId = req.user._id;
+
   const user = await User.findById(userId).select("-password");
   if (user) {
     res.status(200).json({ sts: "01", msg: "Success", user });
@@ -786,11 +788,14 @@ export const changePassword = asyncHandler(async (req, res) => {
   if (user) {
     user.password = password;
     const updatedUser = await user.save();
+    
     if (updatedUser) {
       res.status(200).json({ sts: "01", msg: "Password changed successfully" });
     } else {
       res.status(400).json({ sts: "00", msg: "Error in changing password" });
     }
+  } else {
+    res.status(404).json({ sts: "00", msg: "User not found" });
   }
 });
 
@@ -941,16 +946,16 @@ export const getStats = asyncHandler(async (req, res) => {
   }
 });
 
-export const sendOTPTest = asyncHandler(async (req, res) => {
-  const response = await axios.get(
-    "https://otp2.aclgateway.com/OTP_ACL_Web/OtpRequestListener?enterpriseid=stplotp&subEnterpriseid=stplotp&pusheid=stplotp&pushepwd=stpl_01&msisdn=9744241239&sender=HYBERE&msgtext=Welcome%20to%20Rubidya!%20Your%20OTP%20for%20registration%20is%20%2012345.%20Please%20enter%20this%20code%20to%20complete%20your%20registration&dpi=1101544370000033504&dtm=1107170911722074274"
-  );
+// export const sendOTPTest = asyncHandler(async (req, res) => {
+//   const response = await axios.get(
+//     "https://otp2.aclgateway.com/OTP_ACL_Web/OtpRequestListener?enterpriseid=stplotp&subEnterpriseid=stplotp&pusheid=stplotp&pushepwd=stpl_01&msisdn=9744241239&sender=HYBERE&msgtext=Welcome%20to%20Rubidya!%20Your%20OTP%20for%20registration%20is%20%2012345.%20Please%20enter%20this%20code%20to%20complete%20your%20registration&dpi=1101544370000033504&dtm=1107170911722074274"
+//   );
 
-  const dataFetched = response.data;
+//   const dataFetched = response.data;
 
-  if (dataFetched) {
-    res.status(200).json({ msg: "OTP sent successfully" });
-  } else {
-    res.status(400).json({ msg: "Error in sending OTP" });
-  }
-});
+//   if (dataFetched) {
+//     res.status(200).json({ msg: "OTP sent successfully" });
+//   } else {
+//     res.status(400).json({ msg: "Error in sending OTP" });
+//   }
+// });

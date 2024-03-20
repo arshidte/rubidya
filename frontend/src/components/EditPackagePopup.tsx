@@ -14,6 +14,12 @@ const EditPackagePopup = ({ id, modal22, setModal22 }: any) => {
 
     useEffect(() => {
         dispatch(getPackageByIdAction(id));
+
+        return () => {
+            setPackageName('');
+            setAmount('');
+            setMemberProfit('');
+        };
     }, [dispatch, id]);
 
     const submitEditHandler = () => {

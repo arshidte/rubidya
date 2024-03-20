@@ -11,8 +11,10 @@ const ManagePackages = () => {
     const dispatch = useAppDispatch();
 
     const { loading, data: rowData, error } = useAppSelector((state: any) => state.getPackage);
-    const { data: newPackageData } = useAppSelector((state: any) => state.addPackage);
+    const { data: newPackageData, error: newPackageError } = useAppSelector((state: any) => state.addPackage);
     const { data: editedPackageData } = useAppSelector((state: any) => state.editPackage);
+
+    const [newPkgErr, setNewPkgErr] = useState(false);
 
     const [modal21, setModal21] = useState(false);
     const [modal22, setModal22] = useState(false);
@@ -67,6 +69,11 @@ const ManagePackages = () => {
     const submitHandler = () => {
         if (packageName && amount) {
             dispatch(addPackage({ packageName, amount, memberProfit }));
+        } else {
+            setNewPkgErr(true);
+            setTimeout(() => {
+                setNewPkgErr(false);
+            }, 3000);
         }
     };
 
@@ -165,6 +172,11 @@ const ManagePackages = () => {
                                                             Submit
                                                         </button>
                                                     </form>
+                                                    {(newPackageError || newPkgErr) && (
+                                                        <div className="text-red-500 mt-1 text-center font-thin text-xs">
+                                                            Please provide package name and amount. Make sure you are not repeating the package name.
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </Dialog.Panel>
                                         </Transition.Child>
@@ -182,11 +194,11 @@ const ManagePackages = () => {
                         records={recordsData}
                         columns={[
                             { accessor: 'packageName', title: 'Package Name' },
-                            { accessor: 'amount', title: 'Amount' },
+                            { accessor: 'amount', title: 'Package Amount' },
                             { accessor: 'memberProfit', title: 'Member Profit' },
                             {
                                 accessor: 'Actions',
-                                title: 'Wallet Amount',
+                                title: 'Edit Package',
                                 render: (packages: any) => (
                                     <div className="space-x-2">
                                         <button

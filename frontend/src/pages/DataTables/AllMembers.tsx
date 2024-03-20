@@ -64,23 +64,21 @@ const AllMembers = () => {
         setRecordsData([...initialRecords.slice(from, to)]);
     }, [page, pageSize, initialRecords, rowData]);
 
-    // useEffect(() => {
-    //     setInitialRecords(() => {
-    //         return (
-    //             rowData &&
-    //             rowData.filter((item: any) => {
-    //                 return (
-    //                     item.firstName.toLowerCase().includes(search.toLowerCase()) ||
-    //                     item.lastName.toLowerCase().includes(search.toLowerCase()) ||
-    //                     item.email.toLowerCase().includes(search.toLowerCase()) ||
-    //                     item.country.toLowerCase().includes(search.toLowerCase()) ||
-    //                     item.phone.toLowerCase().includes(search.toLowerCase())
-    //                 );
-    //             })
-    //         );
-    //     });
-    //     // eslint-disable-next-line react-hooks/exhaustive-deps
-    // }, [search]);
+    useEffect(() => {
+        setInitialRecords(() => {
+            return (
+                rowData &&
+                rowData.filter((item: any) => {
+                    return (
+                        item.firstName.toLowerCase().includes(search.toLowerCase()) ||
+                        item.lastName.toLowerCase().includes(search.toLowerCase()) ||
+                        item.email.toLowerCase().includes(search.toLowerCase())
+                    );
+                })
+            );
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [search]);
 
     useEffect(() => {
         const data = sortBy(initialRecords, sortStatus.columnAccessor);
@@ -89,7 +87,7 @@ const AllMembers = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sortStatus]);
 
-    const header = ['Firstname', 'Lastname', 'Country', 'Status', 'Email', 'Phone No.'];
+    const header = ['Firstname', 'Lastname', 'Email', 'Status', 'Email', 'Phone No.'];
 
     const formatDate = (date: any) => {
         if (date) {
@@ -256,8 +254,8 @@ const AllMembers = () => {
     return (
         <div>
             <div className="panel mt-6">
-                {/* <div className="flex md:items-center justify-between md:flex-row flex-col mb-4.5 gap-5">
-                    <div className="flex items-center flex-wrap">
+                <div className="flex md:items-center justify-between md:flex-row flex-col mb-4.5 gap-5">
+                    {/* <div className="flex items-center flex-wrap">
                         <button type="button" onClick={() => exportTable('csv')} className="btn btn-primary btn-sm m-1 ">
                             <IconFile className="w-5 h-5 ltr:mr-2 rtl:ml-2" />
                             CSV
@@ -276,22 +274,28 @@ const AllMembers = () => {
                             <IconPrinter className="ltr:mr-2 rtl:ml-2" />
                             PRINT
                         </button>
-                    </div>
+                    </div> */}
 
                     <input type="text" className="form-input w-auto" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
-                </div> */}
+                </div>
                 <div className="datatables">
                     <DataTable
                         highlightOnHover
                         className="whitespace-nowrap table-hover"
                         records={recordsData}
                         columns={[
+                            {
+                                accessor: 'Actions',
+                                title: 'Serial No.',
+                                sortable: false,
+                                render: (user: any, idx: number) => <>{idx + 1}</>,
+                            },
                             { accessor: '_id', hidden: true },
                             { accessor: 'firstName', sortable: true },
                             { accessor: 'lastName', sortable: true },
                             { accessor: 'email', sortable: true },
-                            { accessor: 'phone', sortable: true },
                             { accessor: 'countryCode', sortable: true },
+                            { accessor: 'phone', sortable: true },
                             {
                                 accessor: 'isVerified',
                                 sortable: true,

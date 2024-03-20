@@ -16,6 +16,46 @@ export const getAllusers = asyncHandler(async (req, res) => {
   }
 });
 
+
+// With pagination
+// export const getAllusers = asyncHandler(async (req, res) => {
+//   const page = parseInt(req.query.page) || 1;
+//   const limit = parseInt(req.query.limit) || 10;
+
+//   const startIndex = (page - 1) * limit;
+//   const endIndex = page * limit;
+
+//   const userCount = await User.countDocuments({});
+
+//   const users = await User.find()
+//     .select("-password")
+//     .skip(startIndex)
+//     .limit(limit);
+
+//   if (users) {
+//     const pagination = {};
+
+//     if (endIndex < userCount) {
+//       pagination.next = {
+//         page: page + 1,
+//         limit: limit,
+//       };
+//     }
+
+//     if (startIndex > 0) {
+//       pagination.prev = {
+//         page: page - 1,
+//         limit: limit,
+//       };
+//     }
+
+//     res.status(200).json({ users, pagination });
+//   } else {
+//     res.status(404).json({ message: "No users found" });
+//   }
+// });
+
+
 // Add 10 level percentages
 export const addLevelPercentages = asyncHandler(async (req, res) => {
   const { levelPercentages } = req.body;

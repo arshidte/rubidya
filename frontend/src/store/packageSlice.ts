@@ -82,15 +82,18 @@ export const addPackageSlice = createSlice({
                 state.loading = true;
             })
             .addCase(addPackage.fulfilled, (state, action) => {
+                
                 state.loading = false;
                 state.data = action.payload;
             })
             .addCase(addPackage.rejected, (state, action) => {
                 state.loading = false;
                 console.error('Error', action.payload);
+                console.log(action.payload);
+                
 
                 if (action.error.message === 'Request failed with status code 500') {
-                    state.error = 'Please make sure you filled all the above details!';
+                    state.error = 'Please make sure you filled package name and amount!';
                 } else if (action.error.message === 'Request failed with status code 400') {
                     state.error = 'Email or Phone already used!';
                 }

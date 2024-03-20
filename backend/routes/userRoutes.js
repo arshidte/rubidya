@@ -15,7 +15,7 @@ import {
   registerUser,
   registerUserByReferral,
   resendOTP,
-  sendOTPTest,
+  // sendOTPTest,
   sendOTPforForget,
   syncWallet,
   uploadImage,
@@ -95,6 +95,6 @@ router.route("/select-package").post(protect, selectPackage);
 router.route("/get-stats").get(protect, getStats);
 
 // Send OTP Test
-router.route('/send-otp-test').get(sendOTPTest);
+// router.route('/send-otp-test').get(sendOTPTest);
 
 export default router;

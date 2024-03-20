@@ -8,21 +8,31 @@ export const addPackage = asyncHandler(async (req, res) => {
 
   const packageSlug = packageName.toLowerCase().split(" ").join("-");
 
-  const addPackage = await Package.create({
-    packageName,
-    amount,
-    memberProfit,
-    packageSlug,
-  });
+  // check if package of same slug exists
+  const packageExists = await Package.findOne({ packageSlug });
 
-  if (addPackage) {
-    res.status(201).json({
-      message: "Package added successfully",
+  if (packageExists) {
+    res.status(400).json({
+      sts: "00",
+      msg: "Package already exists",
     });
   } else {
-    res.status(400).json({
-      message: "Package not added",
+    const addPackage = await Package.create({
+      packageName,
+      amount,
+      memberProfit,
+      packageSlug,
     });
+
+    if (addPackage) {
+      res.status(201).json({
+        message: "Package added successfully",
+      });
+    } else {
+      res.status(400).json({
+        message: "Package not added",
+      });
+    }
   }
 });
 
@@ -61,7 +71,6 @@ export const editPackage = asyncHandler(async (req, res) => {
       msg: "Package not updated",
     });
   }
-  
 });
 
 // Get all packages
