@@ -4,7 +4,7 @@ import User from "../models/userModel.js";
 
 // Add new package by admin
 export const addPackage = asyncHandler(async (req, res) => {
-  const { packageName, amount, memberProfit } = req.body;
+  const { packageName, amount, memberProfit, benefits } = req.body;
 
   const packageSlug = packageName.toLowerCase().split(" ").join("-");
 
@@ -21,6 +21,7 @@ export const addPackage = asyncHandler(async (req, res) => {
       packageName,
       amount,
       memberProfit,
+      benefits,
       packageSlug,
     });
 

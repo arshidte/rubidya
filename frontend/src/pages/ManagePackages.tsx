@@ -42,9 +42,6 @@ const ManagePackages = () => {
     const [amount, setAmount] = useState('');
     const [memberProfit, setMemberProfit] = useState('');
     const [benefits, setBenefits] = useState<Benefit[]>(['']);
-    const [benefit, setBenefit] = useState('');
-
-    console.log(benefits);
 
     useEffect(() => {
         dispatch(setPageTitle('Manage Packages'));
@@ -76,7 +73,7 @@ const ManagePackages = () => {
 
     const submitHandler = () => {
         if (packageName && amount) {
-            dispatch(addPackage({ packageName, amount, memberProfit }));
+            dispatch(addPackage({ packageName, amount, memberProfit, benefits }));
         } else {
             setNewPkgErr(true);
             setTimeout(() => {
@@ -99,15 +96,13 @@ const ManagePackages = () => {
 
     const handleBenefitChange = (index: number, benefit: string) => {
         const newBenefits = [...benefits];
-        // setBenefit(benefit);
         newBenefits[index] = benefit;
         setBenefits(newBenefits);
     };
 
     const handleAddBenefit = (e: any) => {
         e.preventDefault();
-        setBenefits([...benefits, benefit]);
-        // setBenefits([...benefits, '']);
+        setBenefits([...benefits, '']);
     };
 
     const handleRemoveBenefit = (index: number) => {
@@ -200,6 +195,7 @@ const ManagePackages = () => {
                                                                 <input
                                                                     key={index}
                                                                     type="text"
+                                                                    value={benefit}
                                                                     placeholder="Benefits"
                                                                     onChange={(e: any) => handleBenefitChange(index, e.target.value)}
                                                                     className="form-input"

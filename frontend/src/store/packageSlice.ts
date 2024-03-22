@@ -54,7 +54,7 @@ export const addPackage = createAsyncThunk('addPackage', async (data: any) => {
     const token: any = localStorage.getItem('userInfo');
     const parsedData = JSON.parse(token);
 
-    const { packageName, amount, memberProfit } = data;
+    const { packageName, amount, memberProfit, benefits } = data;
 
     const config = {
         headers: {
@@ -63,7 +63,7 @@ export const addPackage = createAsyncThunk('addPackage', async (data: any) => {
         },
     };
 
-    const response = await axios.post(`${URL}/api/admin/add-package`, { packageName, amount, memberProfit }, config);
+    const response = await axios.post(`${URL}/api/admin/add-package`, { packageName, amount, memberProfit, benefits }, config);
 
     return response.data;
 });

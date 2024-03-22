@@ -20,6 +20,11 @@ const packageSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    benefits: [
+      {
+        type: String,
+      },
+    ],
     packageSlug: {
       type: String,
       required: true,

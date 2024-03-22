@@ -33,7 +33,7 @@ const LevelConfig: React.FC = () => {
     useEffect(() => {
         dispatch(setPageTitle('Level Configuration'));
         dispatch(getPercentages());
-    }, [dispatch]);
+    }, [dispatch, percentageData]);
 
     useEffect(() => {
         if (percentageData) {
