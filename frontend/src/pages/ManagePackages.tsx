@@ -3,9 +3,13 @@ import { useEffect, useState, Fragment } from 'react';
 import { setPageTitle } from '../store/themeConfigSlice';
 import { useAppDispatch, useAppSelector } from '../store';
 import { addPackage, getPackageByIdAction, getPackages } from '../store/packageSlice';
+import IconPlus from '../components/Icon/IconPlus';
 
 import { Dialog, Transition, Tab } from '@headlessui/react';
 import EditPackagePopup from '../components/EditPackagePopup';
+import IconMinus from '../components/Icon/IconMinus';
+
+type Benefit = string;
 
 const ManagePackages = () => {
     const dispatch = useAppDispatch();
@@ -37,6 +41,10 @@ const ManagePackages = () => {
     const [packageName, setPackageName] = useState('');
     const [amount, setAmount] = useState('');
     const [memberProfit, setMemberProfit] = useState('');
+    const [benefits, setBenefits] = useState<Benefit[]>(['']);
+    const [benefit, setBenefit] = useState('');
+
+    console.log(benefits);
 
     useEffect(() => {
         dispatch(setPageTitle('Manage Packages'));
@@ -88,6 +96,25 @@ const ManagePackages = () => {
             dispatch(getPackages());
         }
     }, [editedPackageData]);
+
+    const handleBenefitChange = (index: number, benefit: string) => {
+        const newBenefits = [...benefits];
+        // setBenefit(benefit);
+        newBenefits[index] = benefit;
+        setBenefits(newBenefits);
+    };
+
+    const handleAddBenefit = (e: any) => {
+        e.preventDefault();
+        setBenefits([...benefits, benefit]);
+        // setBenefits([...benefits, '']);
+    };
+
+    const handleRemoveBenefit = (index: number) => {
+        const newBenefits = [...benefits];
+        newBenefits.splice(index, 1);
+        setBenefits(newBenefits);
+    };
 
     return (
         <div className="space-y-6">
@@ -168,6 +195,30 @@ const ManagePackages = () => {
                                                                 id="password"
                                                             />
                                                         </div>
+                                                        {benefits.map((benefit, index) => (
+                                                            <div className="mb-4 flex gap-2">
+                                                                <input
+                                                                    key={index}
+                                                                    type="text"
+                                                                    placeholder="Benefits"
+                                                                    onChange={(e: any) => handleBenefitChange(index, e.target.value)}
+                                                                    className="form-input"
+                                                                    id="name"
+                                                                    required
+                                                                />
+                                                                {index === benefits.length - 1 && (
+                                                                    <button className="btn btn-primary" onClick={handleAddBenefit}>
+                                                                        <IconPlus />
+                                                                    </button>
+                                                                )}
+                                                                {index !== 0 && (
+                                                                    <button className="btn btn-primary" onClick={() => handleRemoveBenefit(index)}>
+                                                                        <IconMinus />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        ))}
+
                                                         <button type="button" onClick={submitHandler} className="btn btn-primary w-full">
                                                             Submit
                                                         </button>

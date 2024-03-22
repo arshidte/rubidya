@@ -4,7 +4,8 @@ import { TypedUseSelectorHook, useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux';
 
 import authReducer from './authSlice';
-import { getAllUsersReducer, getUsersCountReducer, registerUserByReferralReducer, verifyOTPReducer, resendOTPReducer } from './adminSlice';
+import { registerUserByReferralReducer, verifyOTPReducer, resendOTPReducer } from './adminSlice';
+import { getAllUsersReducer, getUsersCountReducer, activationHandleReducer } from './userSlice';
 import { addPercentagesReducer, getPercentagesReducer, editPercentagesReducer } from './levelSlice';
 import { getPackagesReducer, addPackageReducer, getPackageByIdReducer, editPackageReducer } from './packageSlice';
 
@@ -23,6 +24,7 @@ const rootReducer = combineReducers({
     addPackage: addPackageReducer,
     getPackageById: getPackageByIdReducer,
     editPackage: editPackageReducer,
+    activationHandle: activationHandleReducer,
 });
 
 const store = configureStore({

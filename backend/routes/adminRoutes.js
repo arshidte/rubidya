@@ -5,6 +5,7 @@ import {
   getAllLevelPercentages,
   getAllusers,
   getUsersCount,
+  handleActivation,
   splitProfit,
 } from "../controllers/adminController.js";
 import { protect } from "../middleware/authMiddleware.js";
@@ -34,5 +35,8 @@ router.route("/edit-package").put(protect, editPackage);
 
 // Split profit
 router.route("/split-profit").get(protect, splitProfit);
+
+// Activate/deactivate the user
+router.route("/activation-handle").post(protect, handleActivation)
 
 export default router;

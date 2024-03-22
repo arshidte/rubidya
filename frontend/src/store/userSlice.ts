@@ -2,25 +2,25 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { URL } from '../Constants';
 
-// Register user by refferal
-export const registerUserByReferral = createAsyncThunk('registerUserByRefferal', async (data: any) => {
+// Get all users to admin
+export const getAllUsersToAdmin = createAsyncThunk('getAllUsers', async () => {
+    const token: any = localStorage.getItem('userInfo');
+    const parsedData = JSON.parse(token);
+
     const config = {
         headers: {
+            Authorization: `Bearer ${parsedData.access_token}`,
             'content-type': 'application/json',
         },
     };
 
-    const response = await axios.post(
-        `${URL}/api/users/add-user-by-refferal`,
-        { userId: data.userId, firstName: data.firstName, lastName: data.lastName, email: data.email, phone: data.mobile, password: data.password, countryCode: data.countryCode },
-        config
-    );
+    const response = await axios.get(`${URL}/api/admin/get-all-users`, config);
 
     return response.data;
 });
 
-export const registerUserByReferralSlice = createSlice({
-    name: 'registerUserByReferralSlice',
+export const getAllUsersSlice = createSlice({
+    name: 'getAllUsersSlice',
     initialState: {
         loading: false,
         data: null,
@@ -29,14 +29,14 @@ export const registerUserByReferralSlice = createSlice({
     reducers: {},
     extraReducers: (builder) => {
         builder
-            .addCase(registerUserByReferral.pending, (state: any) => {
+            .addCase(getAllUsersToAdmin.pending, (state: any) => {
                 state.loading = true;
             })
-            .addCase(registerUserByReferral.fulfilled, (state, action) => {
+            .addCase(getAllUsersToAdmin.fulfilled, (state, action) => {
                 state.loading = false;
                 state.data = action.payload;
             })
-            .addCase(registerUserByReferral.rejected, (state, action) => {
+            .addCase(getAllUsersToAdmin.rejected, (state, action) => {
                 state.loading = false;
                 console.error('Error', action.payload);
 
@@ -49,22 +49,25 @@ export const registerUserByReferralSlice = createSlice({
     },
 });
 
-// Enter OTP
-export const verifyOTP = createAsyncThunk('verifyOTP', async (data: any) => {
+// Get the count of users
+export const getUsersCount = createAsyncThunk('getUsersCount', async () => {
+    const token: any = localStorage.getItem('userInfo');
+    const parsedData = JSON.parse(token);
 
     const config = {
         headers: {
+            Authorization: `Bearer ${parsedData.access_token}`,
             'content-type': 'application/json',
         },
     };
 
-    const response = await axios.post(`${URL}/api/users/verify-otp`, { userId: data.userId, OTP: data.otp }, config);
+    const response = await axios.get(`${URL}/api/admin/get-users-count`, config);
 
     return response.data;
 });
 
-export const verifyOTPSlice = createSlice({
-    name: 'verifyOTPSlice',
+export const getUsersCountSlice = createSlice({
+    name: 'getUsersCountSlice',
     initialState: {
         loading: false,
         data: null,
@@ -73,14 +76,14 @@ export const verifyOTPSlice = createSlice({
     reducers: {},
     extraReducers: (builder) => {
         builder
-            .addCase(verifyOTP.pending, (state: any) => {
+            .addCase(getUsersCount.pending, (state: any) => {
                 state.loading = true;
             })
-            .addCase(verifyOTP.fulfilled, (state, action) => {
+            .addCase(getUsersCount.fulfilled, (state, action) => {
                 state.loading = false;
                 state.data = action.payload;
             })
-            .addCase(verifyOTP.rejected, (state, action) => {
+            .addCase(getUsersCount.rejected, (state, action) => {
                 state.loading = false;
                 console.error('Error', action.payload);
 
@@ -93,21 +96,29 @@ export const verifyOTPSlice = createSlice({
     },
 });
 
-// Resend OTP
-export const resendOTP = createAsyncThunk('resendOTP', async (data: any) => {
+// Activate/Deactivate the user
+export const activationHandle = createAsyncThunk('activationHandle', async (data: any) => {
+    const token: any = localStorage.getItem('userInfo');
+    const parsedData = JSON.parse(token);
+
     const config = {
         headers: {
+            Authorization: `Bearer ${parsedData.access_token}`,
             'content-type': 'application/json',
         },
     };
 
-    const response = await axios.post(`${URL}/api/users/resend-otp`, { userId: data.userId, email: data.email }, config);
+    const {userId, status} = data;
+
+    const response = await axios.post(`${URL}/api/admin/activation-handle`, { userId, status }, config);
+
+    console.log(response.data);
 
     return response.data;
 });
 
-export const resendOTPSlice = createSlice({
-    name: 'resendOTPSlice',
+export const activationHandleSlice = createSlice({
+    name: 'activationHandleSlice',
     initialState: {
         loading: false,
         data: null,
@@ -116,14 +127,14 @@ export const resendOTPSlice = createSlice({
     reducers: {},
     extraReducers: (builder) => {
         builder
-            .addCase(resendOTP.pending, (state: any) => {
+            .addCase(activationHandle.pending, (state: any) => {
                 state.loading = true;
             })
-            .addCase(resendOTP.fulfilled, (state, action) => {
+            .addCase(activationHandle.fulfilled, (state, action) => {
                 state.loading = false;
                 state.data = action.payload;
             })
-            .addCase(resendOTP.rejected, (state, action) => {
+            .addCase(activationHandle.rejected, (state, action) => {
                 state.loading = false;
                 console.error('Error', action.payload);
 
@@ -136,6 +147,6 @@ export const resendOTPSlice = createSlice({
     },
 });
 
-export const resendOTPReducer = resendOTPSlice.reducer;
-export const verifyOTPReducer = verifyOTPSlice.reducer;
-export const registerUserByReferralReducer = registerUserByReferralSlice.reducer;
+export const activationHandleReducer = activationHandleSlice.reducer;
+export const getUsersCountReducer = getUsersCountSlice.reducer;
+export const getAllUsersReducer = getAllUsersSlice.reducer;

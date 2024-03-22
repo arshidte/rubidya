@@ -16,7 +16,6 @@ export const getAllusers = asyncHandler(async (req, res) => {
   }
 });
 
-
 // With pagination
 // export const getAllusers = asyncHandler(async (req, res) => {
 //   const page = parseInt(req.query.page) || 1;
@@ -54,7 +53,6 @@ export const getAllusers = asyncHandler(async (req, res) => {
 //     res.status(404).json({ message: "No users found" });
 //   }
 // });
-
 
 // Add 10 level percentages
 export const addLevelPercentages = asyncHandler(async (req, res) => {
@@ -238,5 +236,35 @@ export const splitProfit = asyncHandler(async (req, res) => {
     res.status(400).json({
       message: "No monthly revenue found",
     });
+  }
+});
+
+export const handleActivation = asyncHandler(async (req, res) => {
+  // Get user ID and status
+  const { userId, status } = req.body;
+
+  if (!userId || status == undefined) {
+
+    res.status(400).json({
+      message: "Please provide all the required fields",
+    });
+
+  } else {
+
+    // Update user with new status
+    const updatedUser = await User.findByIdAndUpdate(userId, {
+      acStatus: status,
+    });
+
+    if (updatedUser) {
+      res.status(201).json({
+        message: "User updated successfully",
+      });
+    } else {
+      res.status(400).json({
+        message: "Error updating user",
+      });
+    }
+    
   }
 });

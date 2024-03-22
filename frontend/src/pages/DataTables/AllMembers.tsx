@@ -1,12 +1,13 @@
 import { DataTable, DataTableSortStatus } from 'mantine-datatable';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import sortBy from 'lodash/sortBy';
 import { downloadExcel } from 'react-export-table-to-excel';
 import { setPageTitle } from '../../store/themeConfigSlice';
-import IconFile from '../../components/Icon/IconFile';
-import IconPrinter from '../../components/Icon/IconPrinter';
+// import IconFile from '../../components/Icon/IconFile';
+// import IconPrinter from '../../components/Icon/IconPrinter';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { getAllUsersToAdmin } from '../../store/adminSlice';
+import { activationHandle, getAllUsersToAdmin } from '../../store/userSlice';
+import { Dialog, Transition, Tab } from '@headlessui/react';
 
 const col = ['firstName', 'lastName', 'country', 'isVerfied', 'email', 'phone'];
 
@@ -27,8 +28,13 @@ const AllMembers = () => {
     const dispatch = useAppDispatch();
 
     const [walletAmount, setWalletAmount] = useState<number>(0);
+    const [selectedUser, setSelectedUser] = useState<any>();
+    const [activationStatus, setActivationStatus] = useState();
 
     const { loading, data: rowData, error } = useAppSelector((state: any) => state.getAllUsers);
+    const { loading: activationLoading, data: activationData, error: activationError } = useAppSelector((state: any) => state.activationHandle);
+
+    const [modal21, setModal21] = useState(false);
 
     useEffect(() => {
         dispatch(setPageTitle('All Members'));
@@ -52,7 +58,7 @@ const AllMembers = () => {
         if (rowData) {
             setInitialRecords(sortBy(rowData, 'id'));
         }
-    }, [rowData]);
+    }, [rowData, activationData]);
 
     useEffect(() => {
         setPage(1);
@@ -99,17 +105,6 @@ const AllMembers = () => {
         return '';
     };
 
-    function handleDownloadExcel() {
-        downloadExcel({
-            fileName: 'table',
-            sheet: 'react-export-table-to-excel',
-            tablePayload: {
-                header,
-                body: rowData,
-            },
-        });
-    }
-
     const fetchWalletAmount = async (body: { payId: any; uniqueId: any; currency: 'RBD' }) => {
         try {
             const response = await fetch('https://pwyfklahtrh.rubideum.net/basic/getBalance', {
@@ -131,6 +126,17 @@ const AllMembers = () => {
             console.error(error);
         }
     };
+
+    function handleDownloadExcel() {
+        downloadExcel({
+            fileName: 'table',
+            sheet: 'react-export-table-to-excel',
+            tablePayload: {
+                header,
+                body: rowData,
+            },
+        });
+    }
 
     const exportTable = (type: any) => {
         let columns: any = col;
@@ -251,6 +257,16 @@ const AllMembers = () => {
             .map((s: any) => s.charAt(0).toUpperCase() + s.substring(1))
             .join(' ');
     };
+
+    const handleEdit = (user: any) => {
+        setModal21(true);
+        setSelectedUser(user);
+    };
+
+    const handleActivation = (user: any) => {
+        dispatch(activationHandle({ userId: user._id, status: !user.acStatus }));
+    };
+
     return (
         <div>
             <div className="panel mt-6">
@@ -285,10 +301,16 @@ const AllMembers = () => {
                         records={recordsData}
                         columns={[
                             {
-                                accessor: 'Actions',
-                                title: 'Serial No.',
+                                accessor: 'Action 01',
+                                title: 'Sl No.',
                                 sortable: false,
                                 render: (user: any, idx: number) => <>{idx + 1}</>,
+                            },
+                            {
+                                accessor: 'createdAt',
+                                title: 'Joining Date',
+                                sortable: true,
+                                render: ({ createdAt }) => <div>{formatDate(createdAt)}</div>,
                             },
                             { accessor: '_id', hidden: true },
                             { accessor: 'firstName', sortable: true },
@@ -299,9 +321,9 @@ const AllMembers = () => {
                             {
                                 accessor: 'isVerified',
                                 sortable: true,
-                                render: ({ isVerified }) => (
+                                render: ({ isAccountVerified }) => (
                                     <div>
-                                        {isVerified ? (
+                                        {isAccountVerified ? (
                                             <div className="bg-green-500 text-white p-1 font-bold rounded w-min text-xs">Verified</div>
                                         ) : (
                                             <div className="bg-red-500 text-white p-1 font-bold rounded w-min text-xs">Not Verified</div>
@@ -310,13 +332,37 @@ const AllMembers = () => {
                                 ),
                             },
                             {
-                                accessor: 'createdAt',
-                                title: 'Joining Date',
-                                sortable: true,
-                                render: ({ createdAt }) => <div>{formatDate(createdAt)}</div>,
+                                accessor: 'Action 02',
+                                title: 'Edit User',
+                                render: (user: any) => (
+                                    <div className="flex space-x-2 flex-col">
+                                        <button type="button" onClick={() => handleEdit(user)} className="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 text-white p-2 rounded-lg">
+                                            Edit
+                                        </button>
+                                    </div>
+                                ),
                             },
                             {
-                                accessor: 'Actions',
+                                accessor: 'Action 03',
+                                title: 'Activation',
+                                render: (user: any) => (
+                                    <div className="flex space-x-2 flex-col">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleActivation(user)}
+                                            className={
+                                                !user.acStatus
+                                                    ? `bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 text-white p-2 rounded-lg`
+                                                    : `bg-gradient-to-r from-red-400 via-red-500 to-red-600 text-white p-2 rounded-lg`
+                                            }
+                                        >
+                                            {user.acStatus ? `Deactivate` : `Activate`}
+                                        </button>
+                                    </div>
+                                ),
+                            },
+                            {
+                                accessor: 'Action 04',
                                 title: 'Wallet Amount',
                                 render: (user: any) => (
                                     <div className="flex space-x-2 flex-col">
@@ -343,6 +389,77 @@ const AllMembers = () => {
                         paginationText={({ from, to, totalRecords }) => `Showing  ${from} to ${to} of ${totalRecords} entries`}
                     />
                 </div>
+                <Transition appear show={modal21} as={Fragment}>
+                    <Dialog
+                        as="div"
+                        open={modal21}
+                        onClose={() => {
+                            setModal21(false);
+                        }}
+                    >
+                        <Transition.Child
+                            as={Fragment}
+                            enter="ease-out duration-300"
+                            enterFrom="opacity-0"
+                            enterTo="opacity-100"
+                            leave="ease-in duration-200"
+                            leaveFrom="opacity-100"
+                            leaveTo="opacity-0"
+                        >
+                            <div className="fixed inset-0" />
+                        </Transition.Child>
+                        <div id="register_modal" className="fixed inset-0 bg-[black]/60 z-[999] overflow-y-auto">
+                            <div className="flex items-start justify-center min-h-screen px-4">
+                                <Transition.Child
+                                    as={Fragment}
+                                    enter="ease-out duration-300"
+                                    enterFrom="opacity-0 scale-95"
+                                    enterTo="opacity-100 scale-100"
+                                    leave="ease-in duration-200"
+                                    leaveFrom="opacity-100 scale-100"
+                                    leaveTo="opacity-0 scale-95"
+                                >
+                                    <Dialog.Panel className="panel border-0 py-1 px-4 rounded-lg overflow-hidden w-full max-w-sm my-8 text-black dark:text-white-dark">
+                                        <div className="flex items-center justify-between p-5 font-semibold text-lg dark:text-white">
+                                            <h5>Register</h5>
+                                        </div>
+                                        <div className="p-5">
+                                            <form>
+                                                <div className="relative mb-4">
+                                                    <input type="text" value={selectedUser && selectedUser.firstName} placeholder="First Name" className="form-input" id="name" />
+                                                </div>
+                                                <div className="relative mb-4">
+                                                    <input type="text" value={selectedUser && selectedUser.lastName} placeholder="Last Name" className="form-input" id="name" />
+                                                </div>
+                                                <div className="relative mb-4">
+                                                    <input type="email" value={selectedUser && selectedUser.email} placeholder="Email" className="form-input" id="email" />
+                                                </div>
+                                                <div className="relative mb-4">
+                                                    <input type="number" value={selectedUser && selectedUser.countryCode} placeholder="Country Code" className="form-input" id="countryCode" />
+                                                </div>
+                                                <div className="relative mb-4">
+                                                    <input type="number" value={selectedUser && selectedUser.phone} placeholder="Phone" className="form-input" id="phone" />
+                                                </div>
+                                                <div className="relative mb-4">
+                                                    <label className="inline-flex mb-0 cursor-pointer">
+                                                        <input type="checkbox" checked={selectedUser && selectedUser.isAccountVerified} className="form-checkbox" />
+                                                        <span className="text-white-dark">Verified</span>
+                                                    </label>
+                                                </div>
+                                                <div className="relative mb-4">
+                                                    <input type="password" placeholder="Change Password" className="form-input" id="password" />
+                                                </div>
+                                                <button type="button" className="btn btn-primary w-full">
+                                                    Submit
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </Dialog.Panel>
+                                </Transition.Child>
+                            </div>
+                        </div>
+                    </Dialog>
+                </Transition>
             </div>
         </div>
     );

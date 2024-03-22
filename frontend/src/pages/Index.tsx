@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { setPageTitle } from '../store/themeConfigSlice';
 import { useAppDispatch, useAppSelector } from '../store';
-import { getUsersCount } from '../store/adminSlice';
+import { getUsersCount } from '../store/userSlice';
 
 const Index = () => {
     const dispatch = useAppDispatch();

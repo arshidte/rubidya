@@ -112,6 +112,10 @@ const userSchema = new mongoose.Schema(
     packageName: {
       type: String,
     },
+    acStatus : {
+      type: Boolean,
+      default: true,
+    }
   },
   {
     timestamps: true,
