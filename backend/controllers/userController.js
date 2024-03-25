@@ -59,7 +59,6 @@ const sendOTP = async ({ _id, email, countryCode, phone }, res) => {
         const response = await axios.get(
           `https://otp2.aclgateway.com/OTP_ACL_Web/OtpRequestListener?enterpriseid=stplotp&subEnterpriseid=stplotp&pusheid=stplotp&pushepwd=stpl_01&msisdn=${phone}&sender=HYBERE&msgtext=Welcome%20to%20Rubidya!%20Your%20OTP%20for%20registration%20is%20%20${OTP}.%20Please%20enter%20this%20code%20to%20complete%20your%20registration&dpi=1101544370000033504&dtm=1107170911722074274`
         );
-        console.log(`SMS OTP response: ${response.data}`);
       } else {
         await transporter.sendMail(mailOptions);
       }
@@ -373,18 +372,6 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
   } else {
     const ownSponsorId = generateRandomString();
 
-    // if (countryCode) {
-    //   if (countryCode == +91) {
-    //     // Send OTP message
-    //   } else {
-    //     const OTP = generateOTP();
-    //     // sendMail(email, OTP);
-    //   }
-    // }
-
-    // const OTP = generateOTP();
-    // const mailSent = sendMail(email, OTP);
-
     const createUser = await User.create({
       sponsor: userId || null,
       firstName,
@@ -411,7 +398,15 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
           { new: true }
         );
       }
-      sendOTP({ _id: createUser._id, email: createUser.email }, res);
+      sendOTP(
+        {
+          _id: createUser._id,
+          email: createUser.email,
+          countryCode: createUser.countryCode,
+          phone: createUser.phone,
+        },
+        res
+      );
     } else {
       res.status(400);
       throw new Error("Invalid user data");
@@ -577,11 +572,11 @@ export const verifyUser = asyncHandler(async (req, res) => {
   // Get the package
   const selectedPackage = await Package.findById(packageId);
 
-  const revenue = await Revenue.findOne({});
+  const revenue = await Revenue.find({});
 
   let totalAmount = 0;
   if (revenue) {
-    const amountToadd = revenue.totalRevenue + amount;
+    const amountToadd = parseFloat(revenue.totalRevenue[0] + amount);
     totalAmount = amountToadd;
   } else {
     totalAmount = amount;
@@ -599,6 +594,7 @@ export const verifyUser = asyncHandler(async (req, res) => {
   }
 
   const user = await User.findById(userId);
+
   if (user) {
     if (user.isAccountVerified) {
       res.status(400);
@@ -650,7 +646,6 @@ export const verifyUser = asyncHandler(async (req, res) => {
 
 // Get user profile
 export const getUserProfile = asyncHandler(async (req, res) => {
-
   const userId = req.user._id;
 
   const user = await User.findById(userId).select("-password");
@@ -788,7 +783,7 @@ export const changePassword = asyncHandler(async (req, res) => {
   if (user) {
     user.password = password;
     const updatedUser = await user.save();
-    
+
     if (updatedUser) {
       res.status(200).json({ sts: "01", msg: "Password changed successfully" });
     } else {
@@ -927,12 +922,14 @@ export const getStats = asyncHandler(async (req, res) => {
   // Get revenue
   const revenue = await Revenue.find({});
 
-  const primeAmount = (revenue.monthlyRevenue * (primePercent / 100)).toFixed(
-    2
+  const primeAmount = parseFloat(
+    (revenue[0].monthlyRevenue * (primePercent / 100)).toFixed(2)
   );
-  const goldAmount = (revenue.monthlyRevenue * (goldPercent / 100)).toFixed(2);
+  const goldAmount = parseFloat(
+    (revenue[0].monthlyRevenue * (goldPercent / 100)).toFixed(2)
+  );
 
-  if (primeAmount && goldAmount) {
+  if (primeAmount || goldAmount) {
     res.status(200).json({
       sts: "01",
       msg: "Stats fetched successfully",
@@ -959,3 +956,82 @@ export const getStats = asyncHandler(async (req, res) => {
 //     res.status(400).json({ msg: "Error in sending OTP" });
 //   }
 // });
+
+// Convert INR to rubidya
+export const convertINR = asyncHandler(async (req, res) => {
+  const { amount } = req.body;
+
+  // Get current rubidya market place
+  const response = await axios.get(
+    "https://pwyfklahtrh.rubideum.net/api/endPoint1/RBD_INR"
+  );
+
+  const currentValue = response.data.data.last_price;
+
+  if (currentValue) {
+    const convertedAmount = amount / currentValue;
+    if (convertedAmount) {
+      res.status(200).json({
+        sts: "01",
+        msg: "Converted successfully",
+        convertedAmount,
+      });
+    } else {
+      res.status(400).json({ sts: "00", msg: "Calculation failed" });
+    }
+  } else {
+    res.status(400).json({ sts: "00", msg: "Error in converting" });
+  }
+});
+
+// Edit user profile
+export const editUserProfile = asyncHandler(async (req, res) => {
+  const userid = req.user._id;
+
+  const { firstName, lastName, email, phone, payId } = req.body;
+
+  if (email || phone) {
+    const userExist = await User.findOne({ email: email || phone });
+    if (userExist) {
+      res.status(400).json({ sts: "00", msg: "Email or phone already used!" });
+    }
+  } else {
+    // If payId, fetch uniqueId
+    let uniqueId = "";
+    if (payId) {
+      const response = await axios.get(
+        `https://pwyfklahtrh.rubideum.net/basic/checkPayIdExist`,
+        { payId }
+      );
+
+      if (response.data.success === 1) {
+        uniqueId = response.data.data.uniqueId;
+        const updatePayId = await User.findByIdAndUpdate(userid, {
+          payId,
+          uniqueId: response.data.data.uniqueId,
+        });
+      } else {
+        res.status(400).json({ sts: "00", msg: "PayId not found" });
+      }
+    }
+
+    // Edit other details
+    const user = await User.findById(userid);
+
+    if (user) {
+      const updateUser = await User.findByIdAndUpdate(userid, {
+        firstName: firstName || user.firstName,
+        lastName: lastName || user.lastName,
+        email: email || user.email,
+        phone: phone || user.phone,
+      });
+      if (updateUser) {
+        res.status(200).json({ sts: "01", msg: "User updated successfully" });
+      } else {
+        res.status(400).json({ sts: "00", msg: "User not updated" });
+      }
+    } else {
+      res.status(400).json({ sts: "00", msg: "User not found" });
+    }
+  }
+});

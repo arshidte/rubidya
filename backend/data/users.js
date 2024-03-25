@@ -8,7 +8,7 @@ const users = [
     email: "admin@rubidya.com",
     countryCode: "+91",
     phone: 9876543210,
-    password: bcrypt.hashSync("pass123", 10),
+    password: bcrypt.hashSync("1111", 10),
     isAdmin: true,
     ownSponsorId: "RDB876534",
     isVerified: false,

@@ -293,6 +293,10 @@ const Register = () => {
 
     const submitForm = (e: any) => {
         e.preventDefault();
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const isValidEmail = emailRegex.test(email);
+
         const data = { userId, firstName, lastName, email, countryCode, mobile, password };
         if (password !== reEnterPassword) {
             alert('Passwords do not match');
@@ -302,6 +306,9 @@ const Register = () => {
             return;
         } else if (mobile.length !== 10) {
             alert('Mobile number must be 10 digits');
+            return;
+        } else if (!isValidEmail) {
+            alert('Email is invalid');
             return;
         } else {
             dispatch(registerUserByReferral(data));
@@ -374,6 +381,7 @@ const Register = () => {
                                 <p className="text-base font-bold leading-normal text-white-dark">Provide your details to register</p>
                             </div>
                             {!enterOTP ? (
+                                <>
                                 <form className="space-y-5 dark:text-white">
                                     <div>
                                         <label htmlFor="Name">First Name</label>
@@ -504,6 +512,8 @@ const Register = () => {
                                         )}
                                     </button>
                                 </form>
+                                <div className="flex items-center justify-center mt-5 text-center">{userError && `Some error occured. Please ensure that the email address or phone number has not been used already!`}</div>
+                                </>
                             ) : (
                                 <>
                                     <form className="space-y-5 dark:text-white">
@@ -538,10 +548,10 @@ const Register = () => {
                                             </>
                                         )}
                                     </div>
+                                    <div className="flex items-center justify-center mt-5">{userError && `Some error occured. Please try again!`}</div>
                                 </>
                             )}
                         </div>
-                        <div className="flex items-center justify-center mt-5">{userError && `Some error occured. Please try again!`}</div>
                     </div>
                 </div>
             </div>

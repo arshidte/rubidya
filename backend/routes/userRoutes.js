@@ -5,7 +5,9 @@ import { protect } from "../middleware/authMiddleware.js";
 import {
   addPayId,
   changePassword,
+  convertINR,
   deductRubideum,
+  editUserProfile,
   getDirectReferredUsers,
   getMedia,
   getStats,
@@ -94,7 +96,11 @@ router.route("/select-package").post(protect, selectPackage);
 // Get all status
 router.route("/get-stats").get(protect, getStats);
 
-// Send OTP Test
-// router.route('/send-otp-test').get(sendOTPTest);
+// Convert INR - RBD
+router.route('/convert-inr').post(protect, convertINR);
+
+// Edit user profile
+router.route("/edit-profile").put(protect, editUserProfile);
+
 
 export default router;

@@ -2,8 +2,8 @@ import mongoose from "mongoose";
 
 const revenueSchema = new mongoose.Schema(
   {
-    totalRevenue: { type: Number },
-    monthlyRevenue: { type: Number },
+    totalRevenue: { type: Number, double: true },
+    monthlyRevenue: { type: Number, double: true },
   },
   {
     timestamps: true,
