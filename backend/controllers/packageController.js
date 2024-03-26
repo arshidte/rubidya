@@ -45,7 +45,19 @@ export const editPackage = asyncHandler(async (req, res) => {
 
   if (selectedPackage) {
     if (packageName.length > 0) {
+      // New package-slug
       const packageSlug = packageName.toLowerCase().split(" ").join("-");
+
+      // Old package-slug
+      const existingPackageSlug = selectedPackage.packageSlug;
+
+      // Change the package name in user document
+      const result = await User.updateMany(
+        { packageName: existingPackageSlug },
+        { $set: { "packageName.$[elem]": packageSlug } },
+        { arrayFilters: [{ elem: existingPackageSlug }] }
+      );
+
       selectedPackage.packageSlug = packageSlug || selectedPackage.packageSlug;
     }
 

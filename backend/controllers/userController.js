@@ -372,8 +372,7 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
   });
 
   if (user) {
-    res.status(400);
-    throw new Error("User already exists");
+    res.status(400).json({ sts: "00", msg: "User already exists" });
   } else {
     const ownSponsorId = generateRandomString();
 
@@ -608,14 +607,19 @@ export const verifyUser = asyncHandler(async (req, res) => {
   const user = await User.findById(userId);
 
   if (user) {
-    if (user.isAccountVerified) {
-      res.status(400);
-      throw new Error("User already verified!");
-    }
+    // if (user.isAccountVerified) {
+    //   res.status(400);
+    //   throw new Error("User already verified!");
+    // }
 
     user.isAccountVerified = true;
     user.packageSelected = packageId;
-    user.packageName = selectedPackage.packageSlug;
+
+    const usersToUpdate = await User.find({
+      packageName: { $exists: true, $type: "string" },
+    });
+
+    user.packageName.push(selectedPackage.packageSlug);
 
     // Push the user to the users in package
     const updateSelectedPackage = await Package.findByIdAndUpdate(packageId, {
@@ -993,50 +997,43 @@ export const convertINR = asyncHandler(async (req, res) => {
 export const editUserProfile = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
-  const { firstName, lastName, email, phone, payId } = req.body;
+  const {
+    firstName,
+    lastName,
+    email,
+    countryCode,
+    phone,
+    bio,
+    profession,
+    gender,
+    dateOfBirth,
+    location,
+    district,
+  } = req.body;
 
-  if (email || phone) {
-    const userExist = await User.findOne({ email: email || phone });
-    if (userExist) {
-      res.status(400).json({ sts: "00", msg: "Email or phone already used!" });
+  // Edit other details
+  const user = await User.findById(userId);
+
+  if (user) {
+    const updateUser = await User.findByIdAndUpdate(userId, {
+      firstName: firstName || user.firstName,
+      lastName: lastName || user.lastName,
+      email: email || user.email,
+      phone: phone || user.phone,
+      countryCode: countryCode || user.countryCode,
+      bio: bio || user.bio,
+      profession: profession || user.profession,
+      gender: gender || user.gender,
+      dateOfBirth: dateOfBirth || user.dateOfBirth,
+      location: location || user.location,
+      district: district || user.district,
+    });
+    if (updateUser) {
+      res.status(200).json({ sts: "01", msg: "User updated successfully" });
+    } else {
+      res.status(400).json({ sts: "00", msg: "User not updated" });
     }
   } else {
-    // If payId, fetch uniqueId
-    let uniqueId = "";
-    if (payId) {
-      const response = await axios.get(
-        `https://pwyfklahtrh.rubideum.net/basic/checkPayIdExist`,
-        { payId }
-      );
-
-      if (response.data.success === 1) {
-        uniqueId = response.data.data.uniqueId;
-        const updatePayId = await User.findByIdAndUpdate(userId, {
-          payId,
-          uniqueId: response.data.data.uniqueId,
-        });
-      } else {
-        res.status(400).json({ sts: "00", msg: "PayId not found" });
-      }
-    }
-
-    // Edit other details
-    const user = await User.findById(userid);
-
-    if (user) {
-      const updateUser = await User.findByIdAndUpdate(userid, {
-        firstName: firstName || user.firstName,
-        lastName: lastName || user.lastName,
-        email: email || user.email,
-        phone: phone || user.phone,
-      });
-      if (updateUser) {
-        res.status(200).json({ sts: "01", msg: "User updated successfully" });
-      } else {
-        res.status(400).json({ sts: "00", msg: "User not updated" });
-      }
-    } else {
-      res.status(400).json({ sts: "00", msg: "User not found" });
-    }
+    res.status(400).json({ sts: "00", msg: "User not found" });
   }
 });

@@ -26,10 +26,12 @@ const userSchema = new mongoose.Schema(
     phone: {
       type: Number,
       required: true,
+      unique: true,
     },
     email: {
       type: String,
       required: true,
+      unique: true,
     },
     password: {
       type: String,
@@ -109,13 +111,34 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    packageName: {
-      type: String,
-    },
-    acStatus : {
+    packageName: [
+      {
+        type: String,
+      },
+    ],
+    acStatus: {
       type: Boolean,
       default: true,
-    }
+    },
+    bio: {
+      type: String,
+    },
+    profession: {
+      type: String,
+    },
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Other", "Prefer not to say"],
+    },
+    dateOfBirth: {
+      type: Date,
+    },
+    location: {
+      type: String,
+    },
+    district: {
+      type: String,
+    },
   },
   {
     timestamps: true,
