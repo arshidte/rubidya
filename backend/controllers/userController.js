@@ -504,63 +504,6 @@ const splitCommissions = async (user, amount, levels, percentages) => {
 };
 
 // Verify user API
-// export const verifyUser = asyncHandler(async (req, res) => {
-//   const userId = req.user._id;
-
-//   // Send the original amount or the package selected also inorder to detect the package.
-
-//   const { amount } = req.body;
-
-//   if (!amount) {
-//     res.status(400);
-//     throw new Error("Please send the amount and package");
-//   }
-
-//   const user = await User.findById(userId);
-
-//   if (user) {
-//     if (user.isAccountVerified) {
-//       res.status(400);
-//       throw new Error("User already verified!");
-//     }
-
-//     user.isAccountVerified = true;
-
-//     // Show amount spend transaction in user's transactions
-//     // user.transactions.push({
-//     //   amount,
-//     //   kind: "premium",
-//     //   fromWhom: "self",
-//     //   status: "approved",
-//     // });
-
-//     const level = await Level.findOne();
-
-//     const percentageArray = level.levelPercentages;
-
-//     const percentages = [];
-//     percentageArray.map((item) => {
-//       percentages.push(item.percentage);
-//     });
-
-//     await splitCommissions(user, amount, percentages.length, percentages);
-
-//     const updatedUser = await user.save();
-
-//     if (updatedUser) {
-//       // Get the count of verified users
-//       const sponsorId = user.sponsor;
-
-//       res.status(200).json({ sts: "01", msg: "User verified successfully" });
-//     } else {
-//       res.status(400).json({ sts: "00", msg: "User not verified" });
-//     }
-//   } else {
-//     res.status(404).json({ sts: "00", msg: "User not found" });
-//   }
-// });
-
-// Verify user API
 export const verifyUser = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
@@ -995,6 +938,7 @@ export const convertINR = asyncHandler(async (req, res) => {
 
 // Edit user profile
 export const editUserProfile = asyncHandler(async (req, res) => {
+
   const userId = req.user._id;
 
   const {
@@ -1015,6 +959,7 @@ export const editUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(userId);
 
   if (user) {
+    
     const updateUser = await User.findByIdAndUpdate(userId, {
       firstName: firstName || user.firstName,
       lastName: lastName || user.lastName,
@@ -1028,6 +973,7 @@ export const editUserProfile = asyncHandler(async (req, res) => {
       location: location || user.location,
       district: district || user.district,
     });
+
     if (updateUser) {
       res.status(200).json({ sts: "01", msg: "User updated successfully" });
     } else {
