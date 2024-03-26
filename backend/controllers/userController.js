@@ -392,7 +392,6 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
     });
 
     if (createUser) {
-      // const OTP = generateOTP();
 
       // Add the new created user to the referred user's referrals
       if (userId) {
@@ -959,7 +958,7 @@ export const editUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(userId);
 
   if (user) {
-    
+
     const updateUser = await User.findByIdAndUpdate(userId, {
       firstName: firstName || user.firstName,
       lastName: lastName || user.lastName,

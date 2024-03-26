@@ -2,8 +2,10 @@ import express from "express";
 import {
   addLevelPercentages,
   editLevelPercentages,
+  editProfileByAdmin,
   getAllLevelPercentages,
   getAllusers,
+  getRevenueToAdmin,
   getUsersCount,
   handleActivation,
   splitProfit,
@@ -38,5 +40,12 @@ router.route("/split-profit").get(protect, splitProfit);
 
 // Activate/deactivate the user
 router.route("/activation-handle").post(protect, handleActivation)
+
+// Edit user profile by admin
+router.route("/edit-user").put(protect, editProfileByAdmin)
+
+// Get revenue to admin
+router.route("/get-revenue").get(protect, getRevenueToAdmin)
+
 
 export default router;

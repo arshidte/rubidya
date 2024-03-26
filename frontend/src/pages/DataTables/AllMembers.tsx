@@ -43,6 +43,7 @@ const AllMembers = () => {
 
     const { loading, data: rowData, error } = useAppSelector((state: any) => state.getAllUsers);
     const { loading: activationLoading, data: activationData, error: activationError } = useAppSelector((state: any) => state.activationHandle);
+    const { loading: editUserByAdminLoading, data: editUserByAdminData, error: editUserByAdminError } = useAppSelector((state: any) => state.editUserByAdmin);
 
     const [modal21, setModal21] = useState(false);
 
@@ -52,7 +53,7 @@ const AllMembers = () => {
 
     useEffect(() => {
         dispatch(getAllUsersToAdmin());
-    }, [activationData]);
+    }, [activationData, editUserByAdminData]);
 
     const [page, setPage] = useState(1);
     const PAGE_SIZES = [10, 20, 30, 50, 100];
@@ -87,7 +88,6 @@ const AllMembers = () => {
                 rowData.filter((item: any) => {
                     return (
                         item.firstName.toLowerCase().includes(search.toLowerCase()) ||
-                        item.lastName.toLowerCase().includes(search.toLowerCase()) ||
                         item.email.toLowerCase().includes(search.toLowerCase())
                     );
                 })
@@ -317,6 +317,7 @@ const AllMembers = () => {
         };
 
         dispatch(editUserDetails(data));
+        setModal21(false);
     };
 
     return (
@@ -491,7 +492,7 @@ const AllMembers = () => {
                                                 <div className="relative mb-4">
                                                     <input
                                                         type="text"
-                                                        value={selectedUser && selectedUser.firstName}
+                                                        defaultValue={selectedUser && selectedUser.firstName}
                                                         onChange={(e) => setChangedFirstName(e.target.value)}
                                                         placeholder="First Name"
                                                         className="form-input"
@@ -501,7 +502,7 @@ const AllMembers = () => {
                                                 <div className="relative mb-4">
                                                     <input
                                                         type="text"
-                                                        value={selectedUser && selectedUser.lastName}
+                                                        defaultValue={selectedUser && selectedUser.lastName}
                                                         onChange={(e) => setChangedLastName(e.target.value)}
                                                         placeholder="Last Name"
                                                         className="form-input"
@@ -511,7 +512,7 @@ const AllMembers = () => {
                                                 <div className="relative mb-4">
                                                     <input
                                                         type="email"
-                                                        value={selectedUser && selectedUser.email}
+                                                        defaultValue={selectedUser && selectedUser.email}
                                                         onChange={(e) => setChangedEmail(e.target.value)}
                                                         placeholder="Email"
                                                         className="form-input"
@@ -521,7 +522,7 @@ const AllMembers = () => {
                                                 <div className="relative mb-4">
                                                     <input
                                                         type="number"
-                                                        value={selectedUser && selectedUser.countryCode}
+                                                        defaultValue={selectedUser && selectedUser.countryCode}
                                                         onChange={(e) => setChangedCountryCode(e.target.value)}
                                                         placeholder="Country Code"
                                                         className="form-input"
@@ -531,7 +532,7 @@ const AllMembers = () => {
                                                 <div className="relative mb-4">
                                                     <input
                                                         type="number"
-                                                        value={selectedUser && selectedUser.phone}
+                                                        defaultValue={selectedUser && selectedUser.phone}
                                                         onChange={(e) => setChangedPhone(e.target.value)}
                                                         placeholder="Phone"
                                                         className="form-input"
@@ -542,7 +543,7 @@ const AllMembers = () => {
                                                     <label className="inline-flex mb-0 cursor-pointer">
                                                         <input
                                                             type="checkbox"
-                                                            checked={selectedUser && selectedUser.isAccountVerified}
+                                                            defaultChecked={selectedUser && selectedUser.isAccountVerified}
                                                             onChange={(e) => setChangedVerification(e.target.checked)}
                                                             className="form-checkbox"
                                                         />

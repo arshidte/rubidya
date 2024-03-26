@@ -141,6 +141,22 @@ export const getUsersCount = asyncHandler(async (req, res) => {
   }
 });
 
+// Get revenue
+export const getRevenueToAdmin = asyncHandler(async (req, res) => {
+  // Get revenue from revenue
+  const revenue = await Revenue.findOne({});
+
+  if (revenue) {
+    const data = {
+      monthlyRevenue: parseFloat(revenue.monthlyRevenue).toFixed(2),
+      totalRevenue: parseFloat(revenue.totalRevenue).toFixed(2),
+    };
+    res.status(200).json(data);
+  } else {
+    res.status(404).json({ sts: "00", msg: "No revenue found" });
+  }
+});
+
 // Split profit to users in prime and gold membership
 export const splitProfit = asyncHandler(async (req, res) => {
   // Get the total amount reached to company (Amount got from packages (500/5000/25000))
@@ -288,7 +304,11 @@ export const editProfileByAdmin = asyncHandler(async (req, res) => {
       user.email = email || user.email;
       user.phone = phone || user.phone;
       user.countryCode = countryCode || user.countryCode;
-      user.isVerified = isVerified || user.isVerified;
+
+      if (user.isAccountVerified !== isVerified) {
+        user.isAccountVerified = isVerified;
+      }
+
       user.password = password || user.password;
 
       const updateUser = await user.save();
