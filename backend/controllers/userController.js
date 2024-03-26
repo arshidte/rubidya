@@ -92,7 +92,7 @@ const sendOTPForget = async ({ email, countryCode, phone }, res) => {
       from: '"Rubidya" <info@rubidya.com>',
       to: email,
       subject: "Reset Rubidya Account",
-      html: `<p>Enter the OTP <b>${OTP}</b> for resetting account</p>`,
+      html: `<p>Enter the OTP <b>${OTP}</b> for verify/reset account</p>`,
     };
 
     // Hash the OTP
@@ -111,7 +111,7 @@ const sendOTPForget = async ({ email, countryCode, phone }, res) => {
 
     if (newOTP) {
       if (countryCode == 91) {
-        await transporter.sendMail(mailOptions);
+        // await transporter.sendMail(mailOptions);
 
         const response = await axios.get(
           `https://otp2.aclgateway.com/OTP_ACL_Web/OtpRequestListener?enterpriseid=stplotp&subEnterpriseid=stplotp&pusheid=stplotp&pushepwd=stpl_01&msisdn=${phone}&sender=HYBERE&msgtext=Hello%20from%20Rubidya.%20Your%20OTP%20for%20password%20reset%20is%20${OTP}.%20Enter%20this%20code%20to%20securely%20reset%20your%20password&dpi=1101544370000033504&dtm=1107170911810846940`
@@ -337,7 +337,12 @@ export const verifyOTPForForget = asyncHandler(async (req, res) => {
         } else {
           const deleteOTP = await UserOTPVerification.deleteMany({ email });
 
-          if (deleteOTP) {
+          const updateUser = await User.updateOne(
+            { email },
+            { $set: { isOTPVerified: true } }
+          );
+
+          if (deleteOTP && updateUser) {
             res.json({
               sts: "01",
               msg: "OTP verified successfully",
@@ -574,17 +579,24 @@ export const verifyUser = asyncHandler(async (req, res) => {
 
   const revenue = await Revenue.find({});
 
-  let totalAmount = 0;
+  let amountToaddToMonth = 0;
+  let amountToaddToTotal = 0;
   if (revenue) {
-    const amountToadd = parseFloat(revenue.totalRevenue[0] + amount);
-    totalAmount = amountToadd;
+    amountToaddToMonth = parseFloat(revenue[0].monthlyRevenue + amount);
+    amountToaddToTotal = parseFloat(revenue[0].totalRevenue + amount);
   } else {
-    totalAmount = amount;
+    amountToaddToMonth = amount;
+    amountToaddToTotal = amount;
   }
 
   const updatedRevenue = await Revenue.findOneAndUpdate(
     {},
-    { $set: { totalRevenue: totalAmount, monthlyRevenue: totalAmount } },
+    {
+      $set: {
+        totalRevenue: amountToaddToTotal,
+        monthlyRevenue: amountToaddToMonth,
+      },
+    },
     { new: true, upsert: true }
   );
 
@@ -897,49 +909,42 @@ export const syncWallet = asyncHandler(async (req, res) => {
 
 // Get stats of number of users in each plan and the total amount to distribute
 export const getStats = asyncHandler(async (req, res) => {
-  // Get the number of users in prime membership
-  const primeUsersCount = await Package.aggregate([
-    { $match: { packageSlug: "prime-membership" } },
-    { $project: { usersCount: { $size: "$users" } } },
+  // Get the member profit and users' count of each plan from package
+  const memberProfits = await Package.aggregate([
+    {
+      $project: {
+        memberProfit: "$memberProfit",
+        packageSlug: "$packageSlug",
+        packageName: "$packageName",
+        usersCount: { $size: "$users" },
+      },
+    },
+    {
+      $match: {
+        memberProfit: { $gt: 0 },
+      },
+    },
   ]);
 
-  const primeCount = primeUsersCount[0].usersCount;
+  // Get the monthly revenue from the revenue collection
+  const revenue = await Revenue.findOne({});
+  const monthlyRevenue = revenue.monthlyRevenue;
 
-  // Get the number of users in gold membership
-  const goldUsersCount = await Package.aggregate([
-    { $match: { packageSlug: "gold-membership" } },
-    { $project: { usersCount: { $size: "$users" } } },
-  ]);
+  if (memberProfits) {
+    memberProfits.forEach((profit) => {
+      profit.splitAmount = (
+        monthlyRevenue *
+        (profit.memberProfit / 100)
+      ).toFixed(2);
+    });
 
-  const goldCount = goldUsersCount[0].usersCount;
-
-  const prime = await Package.findOne({ packageSlug: "prime-membership" });
-  const gold = await Package.findOne({ packageSlug: "gold-membership" });
-
-  const primePercent = prime.memberProfit;
-  const goldPercent = gold.memberProfit;
-
-  // Get revenue
-  const revenue = await Revenue.find({});
-
-  const primeAmount = parseFloat(
-    (revenue[0].monthlyRevenue * (primePercent / 100)).toFixed(2)
-  );
-  const goldAmount = parseFloat(
-    (revenue[0].monthlyRevenue * (goldPercent / 100)).toFixed(2)
-  );
-
-  if (primeAmount || goldAmount) {
     res.status(200).json({
       sts: "01",
       msg: "Stats fetched successfully",
-      primeCount,
-      goldCount,
-      primeAmount,
-      goldAmount,
+      memberProfits,
     });
   } else {
-    res.status(400).json({ sts: "00", msg: "Error in fetching stats" });
+    res.status(404).json({ sts: "00", msg: "No stats found" });
   }
 });
 
@@ -986,7 +991,7 @@ export const convertINR = asyncHandler(async (req, res) => {
 
 // Edit user profile
 export const editUserProfile = asyncHandler(async (req, res) => {
-  const userid = req.user._id;
+  const userId = req.user._id;
 
   const { firstName, lastName, email, phone, payId } = req.body;
 
@@ -1006,7 +1011,7 @@ export const editUserProfile = asyncHandler(async (req, res) => {
 
       if (response.data.success === 1) {
         uniqueId = response.data.data.uniqueId;
-        const updatePayId = await User.findByIdAndUpdate(userid, {
+        const updatePayId = await User.findByIdAndUpdate(userId, {
           payId,
           uniqueId: response.data.data.uniqueId,
         });

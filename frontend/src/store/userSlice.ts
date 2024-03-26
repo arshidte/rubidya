@@ -108,7 +108,7 @@ export const activationHandle = createAsyncThunk('activationHandle', async (data
         },
     };
 
-    const {userId, status} = data;
+    const { userId, status } = data;
 
     const response = await axios.post(`${URL}/api/admin/activation-handle`, { userId, status }, config);
 
@@ -145,6 +145,25 @@ export const activationHandleSlice = createSlice({
                 }
             });
     },
+});
+
+// Edit user details
+export const editUserDetails = createAsyncThunk('editUserDetails', async (data: any) => {
+    const token: any = localStorage.getItem('userInfo');
+    const parsedData = JSON.parse(token);
+
+    const config = {
+        headers: {
+            Authorization: `Bearer ${parsedData.access_token}`,
+            'content-type': 'application/json',
+        },
+    };
+
+    const { firstName, lastName, email, phone, countryCode, isVerified, password, userId } = data;
+
+    const response = await axios.post(`${URL}/api/admin/edit-user`, { firstName, lastName, email, phone, countryCode, isVerified, password, userId }, config);
+
+    return response.data;
 });
 
 export const activationHandleReducer = activationHandleSlice.reducer;

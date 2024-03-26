@@ -244,13 +244,10 @@ export const handleActivation = asyncHandler(async (req, res) => {
   const { userId, status } = req.body;
 
   if (!userId || status == undefined) {
-
     res.status(400).json({
       message: "Please provide all the required fields",
     });
-
   } else {
-
     // Update user with new status
     const updatedUser = await User.findByIdAndUpdate(userId, {
       acStatus: status,
@@ -265,6 +262,49 @@ export const handleActivation = asyncHandler(async (req, res) => {
         message: "Error updating user",
       });
     }
-    
+  }
+});
+
+// Edit profile
+export const editProfileByAdmin = asyncHandler(async (req, res) => {
+  const {
+    firstName,
+    lastName,
+    email,
+    phone,
+    countryCode,
+    isVerified,
+    password,
+    userId,
+  } = req.body;
+
+  if (userId) {
+    const user = await User.findById(userId);
+
+    if (user) {
+      // Update user details
+      user.firstName = firstName || user.firstName;
+      user.lastName = lastName || user.lastName;
+      user.email = email || user.email;
+      user.phone = phone || user.phone;
+      user.countryCode = countryCode || user.countryCode;
+      user.isVerified = isVerified || user.isVerified;
+      user.password = password || user.password;
+
+      const updateUser = await user.save();
+
+      if (updateUser) {
+        res
+          .status(201)
+          .json({ sts: "01", msg: "Profile updated successfully" });
+      } else {
+        res.status(400).json({ sts: "00", msg: "Error in updating profile" });
+      }
+    } else {
+      res.status(400).json({ sts: "00", msg: "User not found" });
+    }
+  } else {
+    res.status(400);
+    throw new Error("Please pass the userId");
   }
 });

@@ -6,8 +6,10 @@ import { setPageTitle } from '../../store/themeConfigSlice';
 // import IconFile from '../../components/Icon/IconFile';
 // import IconPrinter from '../../components/Icon/IconPrinter';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { activationHandle, getAllUsersToAdmin } from '../../store/userSlice';
+import { activationHandle, editUserDetails, getAllUsersToAdmin } from '../../store/userSlice';
 import { Dialog, Transition, Tab } from '@headlessui/react';
+
+import Swal from 'sweetalert2';
 
 const col = ['firstName', 'lastName', 'country', 'isVerfied', 'email', 'phone'];
 
@@ -30,6 +32,14 @@ const AllMembers = () => {
     const [walletAmount, setWalletAmount] = useState<number>(0);
     const [selectedUser, setSelectedUser] = useState<any>();
     const [activationStatus, setActivationStatus] = useState();
+    //
+    const [changedFirstName, setChangedFirstName] = useState('');
+    const [changedLastName, setChangedLastName] = useState('');
+    const [changedEmail, setChangedEmail] = useState('');
+    const [changedCountryCode, setChangedCountryCode] = useState('');
+    const [changedPhone, setChangedPhone] = useState('');
+    const [changedVerification, setChangedVerification] = useState(false);
+    const [changedPassword, setChangedPassword] = useState('');
 
     const { loading, data: rowData, error } = useAppSelector((state: any) => state.getAllUsers);
     const { loading: activationLoading, data: activationData, error: activationError } = useAppSelector((state: any) => state.activationHandle);
@@ -42,7 +52,7 @@ const AllMembers = () => {
 
     useEffect(() => {
         dispatch(getAllUsersToAdmin());
-    }, []);
+    }, [activationData]);
 
     const [page, setPage] = useState(1);
     const PAGE_SIZES = [10, 20, 30, 50, 100];
@@ -58,7 +68,7 @@ const AllMembers = () => {
         if (rowData) {
             setInitialRecords(sortBy(rowData, 'id'));
         }
-    }, [rowData, activationData]);
+    }, [rowData]);
 
     useEffect(() => {
         setPage(1);
@@ -118,7 +128,21 @@ const AllMembers = () => {
             if (response.ok) {
                 const data = await response.json();
                 setWalletAmount(data.balance);
-                alert(`Wallet amount: ${data.balance}`);
+                if (data.balance == undefined) {
+                    Swal.fire({
+                        icon: 'error',
+                        text: 'User not verified',
+                        padding: '2em',
+                        customClass: 'sweet-alerts',
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'success',
+                        text: `Wallet amount: ${data.balance}`,
+                        padding: '2em',
+                        customClass: 'sweet-alerts',
+                    });
+                }
             } else {
                 console.error('Response not ok:', response.status, response.statusText);
             }
@@ -264,7 +288,35 @@ const AllMembers = () => {
     };
 
     const handleActivation = (user: any) => {
-        dispatch(activationHandle({ userId: user._id, status: !user.acStatus }));
+        Swal.fire({
+            icon: 'warning',
+            title: 'Are you sure?',
+            text: user.acStatus ? `You are de-activating this user.` : `You are activating this user.`,
+            showCancelButton: true,
+            confirmButtonText: user.acStatus ? 'De-activate' : 'Activate',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        }).then((result) => {
+            if (result.value) {
+                dispatch(activationHandle({ userId: user._id, status: !user.acStatus }));
+                Swal.fire({ title: user.acStatus ? 'De-Activated!' : 'Activated', text: user.acStatus ? 'User de-activated.' : 'User activated.', icon: 'success', customClass: 'sweet-alerts' });
+            }
+        });
+    };
+
+    const editUserDetailsHandler = () => {
+        const data = {
+            firstName: changedFirstName,
+            lastName: changedLastName,
+            email: changedEmail,
+            phone: changedPhone,
+            countryCode: changedCountryCode,
+            isVerified: changedVerification,
+            password: changedPassword,
+            userId: selectedUser._id,
+        };
+
+        dispatch(editUserDetails(data));
     };
 
     return (
@@ -362,6 +414,17 @@ const AllMembers = () => {
                                 ),
                             },
                             {
+                                accessor: 'Action 05',
+                                title: 'View Profile',
+                                render: (user: any) => (
+                                    <div className="flex space-x-2 flex-col">
+                                        <button type="button" className="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 text-white p-2 rounded-lg">
+                                            View Profile
+                                        </button>
+                                    </div>
+                                ),
+                            },
+                            {
                                 accessor: 'Action 04',
                                 title: 'Wallet Amount',
                                 render: (user: any) => (
@@ -426,30 +489,70 @@ const AllMembers = () => {
                                         <div className="p-5">
                                             <form>
                                                 <div className="relative mb-4">
-                                                    <input type="text" value={selectedUser && selectedUser.firstName} placeholder="First Name" className="form-input" id="name" />
+                                                    <input
+                                                        type="text"
+                                                        value={selectedUser && selectedUser.firstName}
+                                                        onChange={(e) => setChangedFirstName(e.target.value)}
+                                                        placeholder="First Name"
+                                                        className="form-input"
+                                                        id="name"
+                                                    />
                                                 </div>
                                                 <div className="relative mb-4">
-                                                    <input type="text" value={selectedUser && selectedUser.lastName} placeholder="Last Name" className="form-input" id="name" />
+                                                    <input
+                                                        type="text"
+                                                        value={selectedUser && selectedUser.lastName}
+                                                        onChange={(e) => setChangedLastName(e.target.value)}
+                                                        placeholder="Last Name"
+                                                        className="form-input"
+                                                        id="name"
+                                                    />
                                                 </div>
                                                 <div className="relative mb-4">
-                                                    <input type="email" value={selectedUser && selectedUser.email} placeholder="Email" className="form-input" id="email" />
+                                                    <input
+                                                        type="email"
+                                                        value={selectedUser && selectedUser.email}
+                                                        onChange={(e) => setChangedEmail(e.target.value)}
+                                                        placeholder="Email"
+                                                        className="form-input"
+                                                        id="email"
+                                                    />
                                                 </div>
                                                 <div className="relative mb-4">
-                                                    <input type="number" value={selectedUser && selectedUser.countryCode} placeholder="Country Code" className="form-input" id="countryCode" />
+                                                    <input
+                                                        type="number"
+                                                        value={selectedUser && selectedUser.countryCode}
+                                                        onChange={(e) => setChangedCountryCode(e.target.value)}
+                                                        placeholder="Country Code"
+                                                        className="form-input"
+                                                        id="countryCode"
+                                                    />
                                                 </div>
                                                 <div className="relative mb-4">
-                                                    <input type="number" value={selectedUser && selectedUser.phone} placeholder="Phone" className="form-input" id="phone" />
+                                                    <input
+                                                        type="number"
+                                                        value={selectedUser && selectedUser.phone}
+                                                        onChange={(e) => setChangedPhone(e.target.value)}
+                                                        placeholder="Phone"
+                                                        className="form-input"
+                                                        id="phone"
+                                                    />
                                                 </div>
                                                 <div className="relative mb-4">
                                                     <label className="inline-flex mb-0 cursor-pointer">
-                                                        <input type="checkbox" checked={selectedUser && selectedUser.isAccountVerified} className="form-checkbox" />
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedUser && selectedUser.isAccountVerified}
+                                                            onChange={(e) => setChangedVerification(e.target.checked)}
+                                                            className="form-checkbox"
+                                                        />
                                                         <span className="text-white-dark">Verified</span>
                                                     </label>
                                                 </div>
                                                 <div className="relative mb-4">
                                                     <input type="password" placeholder="Change Password" className="form-input" id="password" />
                                                 </div>
-                                                <button type="button" className="btn btn-primary w-full">
+                                                <button type="button" onClick={editUserDetailsHandler} className="btn btn-primary w-full">
                                                     Submit
                                                 </button>
                                             </form>
