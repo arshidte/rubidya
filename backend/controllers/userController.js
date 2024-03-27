@@ -448,7 +448,6 @@ export const loginUser = asyncHandler(async (req, res) => {
       sts: "01",
       msg: "Success",
     });
-
   } else {
     res.status(401).json({ sts: "00", msg: "Login failed" });
   }
@@ -511,9 +510,12 @@ export const verifyUser = asyncHandler(async (req, res) => {
 
   const { amount, packageId } = req.body;
 
-  if (!amount || !packageId) {
+  // Convert the amount type to number
+  const newAmount = parseFloat(amount);
+
+  if (!newAmount || !packageId) {
     res.status(400);
-    throw new Error("Please send the amount and package");
+    throw new Error("Please send the newAmount and package");
   }
 
   // Get the package
@@ -521,22 +523,22 @@ export const verifyUser = asyncHandler(async (req, res) => {
 
   const revenue = await Revenue.find({});
 
-  let amountToaddToMonth = 0;
-  let amountToaddToTotal = 0;
+  let newAmountToaddToMonth = 0;
+  let newAmountToaddToTotal = 0;
   if (revenue) {
-    amountToaddToMonth = parseFloat(revenue[0].monthlyRevenue + amount);
-    amountToaddToTotal = parseFloat(revenue[0].totalRevenue + amount);
+    newAmountToaddToMonth = parseFloat(revenue[0].monthlyRevenue + newAmount);
+    newAmountToaddToTotal = parseFloat(revenue[0].totalRevenue + newAmount);
   } else {
-    amountToaddToMonth = amount;
-    amountToaddToTotal = amount;
+    newAmountToaddToMonth = newAmount;
+    newAmountToaddToTotal = newAmount;
   }
 
   const updatedRevenue = await Revenue.findOneAndUpdate(
     {},
     {
       $set: {
-        totalRevenue: amountToaddToTotal,
-        monthlyRevenue: amountToaddToMonth,
+        totalRevenue: newAmountToaddToTotal,
+        monthlyRevenue: newAmountToaddToMonth,
       },
     },
     { new: true, upsert: true }
@@ -550,7 +552,6 @@ export const verifyUser = asyncHandler(async (req, res) => {
   const user = await User.findById(userId);
 
   if (user) {
-    
     user.isAccountVerified = true;
     user.packageSelected = packageId;
 
@@ -663,12 +664,11 @@ export const addPayId = asyncHandler(async (req, res) => {
       { payId, uniqueId, isVerified: true, nodeId: existingUser.sponsor },
       { new: true }
     );
-  } else {
-    res.status(404).json({ sts: "00", msg: "User not found" });
-  }
-
-  if (user) {
-    res.status(200).json({ sts: "01", msg: "PayId added successfully" });
+    if (user) {
+      res.status(200).json({ sts: "01", msg: "PayId added successfully" });
+    } else {
+      res.status(404).json({ sts: "00", msg: "User not found" });
+    }
   } else {
     res.status(404).json({ sts: "00", msg: "User not found" });
   }
