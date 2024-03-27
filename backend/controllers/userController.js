@@ -9,7 +9,7 @@ import sharp from "sharp";
 
 import { transporter } from "../config/nodeMailer.js";
 import UserOTPVerification from "../models/otpModel.js";
-import { Router } from "express";
+
 import axios from "axios";
 import Package from "../models/packageModel.js";
 import Revenue from "../models/revenueModel.js";
@@ -392,7 +392,6 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
     });
 
     if (createUser) {
-
       // Add the new created user to the referred user's referrals
       if (userId) {
         const referredUser = await User.findOneAndUpdate(
@@ -440,6 +439,7 @@ export const loginUser = asyncHandler(async (req, res) => {
       email: user.email,
       phone: user.phone,
       isAdmin: user.isAdmin,
+      acStatus: user.acStatus,
       ownSponsorId: user.ownSponsorId,
       isOTPVerified: user.isOTPVerified,
       totalReferralAmount: user.totalReferralAmount,
@@ -448,6 +448,7 @@ export const loginUser = asyncHandler(async (req, res) => {
       sts: "01",
       msg: "Success",
     });
+
   } else {
     res.status(401).json({ sts: "00", msg: "Login failed" });
   }
@@ -549,11 +550,7 @@ export const verifyUser = asyncHandler(async (req, res) => {
   const user = await User.findById(userId);
 
   if (user) {
-    // if (user.isAccountVerified) {
-    //   res.status(400);
-    //   throw new Error("User already verified!");
-    // }
-
+    
     user.isAccountVerified = true;
     user.packageSelected = packageId;
 
@@ -806,7 +803,10 @@ export const deductRubideum = asyncHandler(async (req, res) => {
     //   res.status(400).json({ sts: "00", msg: "Error in deducting rubideum" });
     // }
   } else {
-    res.status(400).json({ sts: "00", msg: "Error in deducting rubideum" });
+    res.status(400).json({
+      sts: "00",
+      msg: "Deducting Rubideum failed. Check your Rubideum balance",
+    });
   }
 });
 
@@ -937,7 +937,6 @@ export const convertINR = asyncHandler(async (req, res) => {
 
 // Edit user profile
 export const editUserProfile = asyncHandler(async (req, res) => {
-
   const userId = req.user._id;
 
   const {
@@ -958,7 +957,6 @@ export const editUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(userId);
 
   if (user) {
-
     const updateUser = await User.findByIdAndUpdate(userId, {
       firstName: firstName || user.firstName,
       lastName: lastName || user.lastName,

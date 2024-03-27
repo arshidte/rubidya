@@ -1,30 +1,38 @@
-import { Fragment, useEffect, useState } from 'react';
-import { Dialog, Transition, Tab } from '@headlessui/react';
+import { Fragment, useState } from 'react';
+import { Dialog, Transition } from '@headlessui/react';
 import { useAppDispatch, useAppSelector } from '../store';
-import { editPackage, getPackageByIdAction } from '../store/packageSlice';
+import { editPackage } from '../store/packageSlice';
+import IconPlus from './Icon/IconPlus';
+import IconMinus from './Icon/IconMinus';
 
-const EditPackagePopup = ({ id, modal22, setModal22 }: any) => {
+const EditPackagePopup = ({ packageData, modal22, setModal22 }: any) => {
     const dispatch = useAppDispatch();
 
-    const { data: getSinglePackageData } = useAppSelector((state: any) => state.getPackageById);
-
-    const [packageName, setPackageName] = useState(getSinglePackageData && getSinglePackageData.singlePackage.packageName);
-    const [amount, setAmount] = useState(getSinglePackageData && getSinglePackageData.singlePackage.amount);
-    const [memberProfit, setMemberProfit] = useState(getSinglePackageData && getSinglePackageData.singlePackage.memberProfit);
-
-    useEffect(() => {
-        dispatch(getPackageByIdAction(id));
-
-        return () => {
-            setPackageName('');
-            setAmount('');
-            setMemberProfit('');
-        };
-    }, [dispatch, id]);
+    const [packageName, setPackageName] = useState(packageData.packageName);
+    const [amount, setAmount] = useState(packageData.amount);
+    const [memberProfit, setMemberProfit] = useState(packageData.memberProfit);
+    const [benefits, setBenefits] = useState(packageData.benefits);
 
     const submitEditHandler = () => {
-        const packageId = id;
-        dispatch(editPackage({ packageId, packageName, amount, memberProfit }));
+        const packageId = packageData._id;
+        dispatch(editPackage({ packageId, packageName, amount, memberProfit, benefits }));
+    };
+
+    const handleBenefitChange = (index: number, benefit: string) => {
+        const newBenefits = [...benefits];
+        newBenefits[index] = benefit;
+        setBenefits(newBenefits);
+    };
+
+    const handleAddBenefit = (e: any) => {
+        e.preventDefault();
+        setBenefits([...benefits, '']);
+    };
+
+    const handleRemoveBenefit = (index: number) => {
+        const newBenefits = [...benefits];
+        newBenefits.splice(index, 1);
+        setBenefits(newBenefits);
     };
 
     return (
@@ -59,37 +67,38 @@ const EditPackagePopup = ({ id, modal22, setModal22 }: any) => {
                                     <div className="p-5">
                                         <form>
                                             <div className="mb-4">
-                                                <input
-                                                    type="text"
-                                                    placeholder={`${getSinglePackageData && getSinglePackageData.singlePackage.packageName}`}
-                                                    value={packageName}
-                                                    onChange={(e: any) => setPackageName(e.target.value)}
-                                                    className="form-input"
-                                                    id="name"
-                                                    required
-                                                />
+                                                <input type="text" value={packageName} onChange={(e: any) => setPackageName(e.target.value)} className="form-input" id="name" required />
                                             </div>
                                             <div className="relative mb-4">
-                                                <input
-                                                    type="number"
-                                                    placeholder={`${getSinglePackageData && getSinglePackageData.singlePackage.amount}`}
-                                                    value={amount}
-                                                    onChange={(e: any) => setAmount(e.target.value)}
-                                                    className="form-input"
-                                                    id="amount"
-                                                    required
-                                                />
+                                                <input type="number" value={amount} onChange={(e: any) => setAmount(e.target.value)} className="form-input" id="amount" required />
                                             </div>
                                             <div className="relative mb-4">
-                                                <input
-                                                    type="number"
-                                                    placeholder={`${getSinglePackageData && getSinglePackageData.singlePackage.memberProfit}`}
-                                                    value={memberProfit}
-                                                    onChange={(e: any) => setMemberProfit(e.target.value)}
-                                                    className="form-input"
-                                                    id="memberProfit"
-                                                />
+                                                <input type="number" value={memberProfit} onChange={(e: any) => setMemberProfit(e.target.value)} className="form-input" id="memberProfit" />
                                             </div>
+                                            {benefits.map((benefit: string, index: number) => (
+                                                <div className="mb-4 flex gap-2">
+                                                    <input
+                                                        key={index}
+                                                        type="text"
+                                                        value={benefit}
+                                                        placeholder="Benefits"
+                                                        onChange={(e: any) => handleBenefitChange(index, e.target.value)}
+                                                        className="form-input"
+                                                        id="name"
+                                                        required
+                                                    />
+                                                    {index === benefits.length - 1 && (
+                                                        <button className="btn btn-primary" onClick={handleAddBenefit}>
+                                                            <IconPlus />
+                                                        </button>
+                                                    )}
+                                                    {index !== 0 && (
+                                                        <button className="btn btn-primary" onClick={() => handleRemoveBenefit(index)}>
+                                                            <IconMinus />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))}
                                             <button type="button" onClick={submitEditHandler} className="btn btn-primary w-full">
                                                 Submit
                                             </button>

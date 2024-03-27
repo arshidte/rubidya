@@ -39,7 +39,7 @@ export const addPackage = asyncHandler(async (req, res) => {
 
 // Edit the package by admin
 export const editPackage = asyncHandler(async (req, res) => {
-  const { packageId, packageName, amount, memberProfit } = req.body;
+  const { packageId, packageName, amount, memberProfit, benefits } = req.body;
 
   const selectedPackage = await Package.findById(packageId);
 
@@ -64,6 +64,7 @@ export const editPackage = asyncHandler(async (req, res) => {
     selectedPackage.packageName = packageName || selectedPackage.packageName;
     selectedPackage.amount = amount || selectedPackage.amount;
     selectedPackage.memberProfit = memberProfit || selectedPackage.memberProfit;
+    selectedPackage.benefits = benefits || selectedPackage.benefits;
 
     const updatedPackage = await selectedPackage.save();
 

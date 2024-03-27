@@ -23,15 +23,9 @@ const ManagePackages = () => {
     const [modal21, setModal21] = useState(false);
     const [modal22, setModal22] = useState(false);
 
-    const [editPackageId, setEditPackageId] = useState('');
+    const [selectedPackage, setSelectedPackage] = useState({});
 
     const PAGE_SIZES = [10, 20, 30, 50, 100];
-
-    useEffect(() => {
-        if (rowData) {
-            setInitialRecords(rowData.packages);
-        }
-    }, [rowData]);
 
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
@@ -42,6 +36,12 @@ const ManagePackages = () => {
     const [amount, setAmount] = useState('');
     const [memberProfit, setMemberProfit] = useState('');
     const [benefits, setBenefits] = useState<Benefit[]>(['']);
+
+    useEffect(() => {
+        if (rowData) {
+            setInitialRecords(rowData.packages);
+        }
+    }, [rowData]);
 
     useEffect(() => {
         dispatch(setPageTitle('Manage Packages'));
@@ -71,6 +71,13 @@ const ManagePackages = () => {
         }
     }, [newPackageData]);
 
+    useEffect(() => {
+        if (editedPackageData) {
+            setModal22(false);
+            dispatch(getPackages());
+        }
+    }, [editedPackageData]);
+
     const submitHandler = () => {
         if (packageName && amount) {
             dispatch(addPackage({ packageName, amount, memberProfit, benefits }));
@@ -82,17 +89,17 @@ const ManagePackages = () => {
         }
     };
 
-    const editPackageHandler = (id: string) => {
-        setEditPackageId(id);
+    const editPackageHandler = (selectedPackageArg: any) => {
+        console.log(selectedPackageArg);
+        setSelectedPackage(selectedPackageArg);
         setModal22(true);
     };
 
     useEffect(() => {
-        if (editedPackageData) {
-            setModal22(false);
-            dispatch(getPackages());
+        if (modal22 === false) {
+            setSelectedPackage({});
         }
-    }, [editedPackageData]);
+    }, [modal22]);
 
     const handleBenefitChange = (index: number, benefit: string) => {
         const newBenefits = [...benefits];
@@ -250,7 +257,7 @@ const ManagePackages = () => {
                                     <div className="space-x-2">
                                         <button
                                             type="button"
-                                            onClick={() => editPackageHandler(packages._id)}
+                                            onClick={() => editPackageHandler(packages)}
                                             className="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 text-white p-2 rounded-lg"
                                         >
                                             Edit Package
@@ -269,7 +276,8 @@ const ManagePackages = () => {
                         paginationText={({ from, to, totalRecords }) => `Showing  ${from} to ${to} of ${totalRecords} entries`}
                     />
                 </div>
-                {modal22 && <EditPackagePopup id={editPackageId} modal22={modal22} setModal22={setModal22} />}
+                {/* {modal22 && <EditPackagePopup id={editPackageId} modal22={modal22} setModal22={setModal22} />} */}
+                {modal22 && <EditPackagePopup packageData={selectedPackage} modal22={modal22} setModal22={setModal22} />}
             </div>
         </div>
     );

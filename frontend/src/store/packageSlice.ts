@@ -147,7 +147,7 @@ export const editPackage = createAsyncThunk('editPackage', async (data: any) => 
     const token: any = localStorage.getItem('userInfo');
     const parsedData = JSON.parse(token);
 
-    const { packageId, packageName, amount, memberProfit } = data;
+    const { packageId, packageName, amount, memberProfit, benefits } = data;
 
     const config = {
         headers: {
@@ -156,7 +156,7 @@ export const editPackage = createAsyncThunk('editPackage', async (data: any) => 
         },
     };
 
-    const response = await axios.put(`${URL}/api/admin/edit-package`, { packageId, packageName, amount, memberProfit }, config);
+    const response = await axios.put(`${URL}/api/admin/edit-package`, { packageId, packageName, amount, memberProfit, benefits }, config);
 
     return response.data;
 });

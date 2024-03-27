@@ -32,7 +32,7 @@ const AllMembers = () => {
     const [walletAmount, setWalletAmount] = useState<number>(0);
     const [selectedUser, setSelectedUser] = useState<any>();
     const [activationStatus, setActivationStatus] = useState();
-    //
+
     const [changedFirstName, setChangedFirstName] = useState('');
     const [changedLastName, setChangedLastName] = useState('');
     const [changedEmail, setChangedEmail] = useState('');
@@ -64,6 +64,8 @@ const AllMembers = () => {
     const [search, setSearch] = useState('');
     const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({ columnAccessor: 'id', direction: 'asc' });
 
+    const [modal5, setModal5] = useState(false);
+
     // Inside the AllMembers component
     useEffect(() => {
         if (rowData) {
@@ -86,10 +88,7 @@ const AllMembers = () => {
             return (
                 rowData &&
                 rowData.filter((item: any) => {
-                    return (
-                        item.firstName.toLowerCase().includes(search.toLowerCase()) ||
-                        item.email.toLowerCase().includes(search.toLowerCase())
-                    );
+                    return item.firstName.toLowerCase().includes(search.toLowerCase()) || item.email.toLowerCase().includes(search.toLowerCase());
                 })
             );
         });
@@ -384,6 +383,7 @@ const AllMembers = () => {
                                     </div>
                                 ),
                             },
+                            { accessor: 'Selected Package', sortable: true, render: ({ packageSelected }) => <div>{packageSelected && packageSelected.packageName}</div> },
                             {
                                 accessor: 'Action 02',
                                 title: 'Edit User',
@@ -410,17 +410,6 @@ const AllMembers = () => {
                                             }
                                         >
                                             {user.acStatus ? `Deactivate` : `Activate`}
-                                        </button>
-                                    </div>
-                                ),
-                            },
-                            {
-                                accessor: 'Action 05',
-                                title: 'View Profile',
-                                render: (user: any) => (
-                                    <div className="flex space-x-2 flex-col">
-                                        <button type="button" className="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 text-white p-2 rounded-lg">
-                                            View Profile
                                         </button>
                                     </div>
                                 ),
