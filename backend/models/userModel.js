@@ -95,7 +95,8 @@ const userSchema = new mongoose.Schema(
       type: String,
     },
     profilePic: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ProfilePic",
     },
     referrals: [
       {

@@ -8,8 +8,8 @@ await connectDB();
 
 const importData = async () => {
   try {
-    // await User.deleteMany();
-    // const createdUsers = await User.insertMany(users);
+    await User.deleteMany();
+    const createdUsers = await User.insertMany(users);
 
     await Revenue.deleteMany();
     const createdRevenue = await Revenue.insertMany(revenue);

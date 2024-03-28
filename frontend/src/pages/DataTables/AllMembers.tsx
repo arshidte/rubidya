@@ -370,6 +370,7 @@ const AllMembers = () => {
                             { accessor: 'email', sortable: true },
                             { accessor: 'countryCode', sortable: true },
                             { accessor: 'phone', sortable: true },
+                            { accessor: 'payId', title: 'Pay ID', sortable: true },
                             {
                                 accessor: 'isVerified',
                                 sortable: true,

@@ -21,6 +21,7 @@ import {
   sendOTPforForget,
   syncWallet,
   uploadImage,
+  uploadProfilePicture,
   verifyOTP,
   verifyOTPForForget,
   verifyUser,
@@ -59,6 +60,7 @@ router.route("/resend-otp").post(resendOTP);
 router.route("/profile").get(protect, getUserProfile);
 
 router.route("/login").post(loginUser);
+
 router.route("/verify-user").post(protect, verifyUser);
 
 // Upload image
@@ -97,10 +99,19 @@ router.route("/select-package").post(protect, selectPackage);
 router.route("/get-stats").get(protect, getStats);
 
 // Convert INR - RBD
-router.route('/convert-inr').post(protect, convertINR);
+router.route("/convert-inr").post(protect, convertINR);
 
 // Edit user profile
 router.route("/edit-profile").put(protect, editUserProfile);
 
+// Add profile picture
+router
+  .route("/add-profile-pic")
+  .post(
+    protect,
+    upload.single("media"),
+    resizeAndCompressImage,
+    uploadProfilePicture
+  );
 
 export default router;

@@ -16,6 +16,7 @@ connectDB();
 
 // Uploads directory
 app.use("/uploads", express.static("/var/www/seclob/rubidya/uploads"));
+// app.use("/uploads", express.static("/uploads"));
 // Uploads directory
 
 // API routes

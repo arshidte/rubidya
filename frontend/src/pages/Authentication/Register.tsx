@@ -104,7 +104,7 @@ const countries = [
     { country: 'Hong Kong', code: '852', iso: 'HK' },
     { country: 'Hungary', code: '36', iso: 'HU' },
     { country: 'Iceland', code: '354', iso: 'IS' },
-    { country: 'India', code: '91', iso: 'IN' },
+    // { country: 'India', code: '91', iso: 'IN' },
     { country: 'Indonesia', code: '62', iso: 'ID' },
     { country: 'Iran', code: '98', iso: 'IR' },
     { country: 'Iraq', code: '964', iso: 'IQ' },
@@ -263,7 +263,7 @@ const Register = () => {
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [mobile, setMobile] = useState('');
-    const [countryCode, setCountryCode] = useState('');
+    const [countryCode, setCountryCode] = useState('91');
     const [reEnterPassword, setReEnterPassword] = useState('');
     const [password, setPassword] = useState('');
     const [showPass, setShowPass] = useState(false);
@@ -286,6 +286,7 @@ const Register = () => {
             setMobile('');
             setPassword('');
             setReEnterPassword('');
+            setCountryCode('91');
 
             setEnterOTP(true);
         }
@@ -298,6 +299,7 @@ const Register = () => {
         const isValidEmail = emailRegex.test(email);
 
         const data = { userId, firstName, lastName, email, countryCode, mobile, password };
+
         if (password !== reEnterPassword) {
             alert('Passwords do not match');
             return;
@@ -309,6 +311,9 @@ const Register = () => {
             return;
         } else if (!isValidEmail) {
             alert('Email is invalid');
+            return;
+        } else if (password.length < 8) {
+            alert('Password should have 8 characters');
             return;
         } else {
             dispatch(registerUserByReferral(data));
@@ -382,137 +387,141 @@ const Register = () => {
                             </div>
                             {!enterOTP ? (
                                 <>
-                                <form className="space-y-5 dark:text-white">
-                                    <div>
-                                        <label htmlFor="Name">First Name</label>
-                                        <div className="relative text-white-dark">
-                                            <input
-                                                id="firstName"
-                                                type="text"
-                                                placeholder="Enter First Name"
-                                                value={firstName}
-                                                onChange={(e) => setFirstName(e.target.value)}
-                                                className="form-input ps-10 placeholder:text-white-dark"
-                                                required
-                                            />
-                                            <span className="absolute start-4 top-1/2 -translate-y-1/2">
-                                                <IconUser fill={true} />
-                                            </span>
+                                    <form className="space-y-5 dark:text-white">
+                                        <div>
+                                            <label htmlFor="Name">First Name</label>
+                                            <div className="relative text-white-dark">
+                                                <input
+                                                    id="firstName"
+                                                    type="text"
+                                                    placeholder="Enter First Name"
+                                                    value={firstName}
+                                                    onChange={(e) => setFirstName(e.target.value)}
+                                                    className="form-input ps-10 placeholder:text-white-dark"
+                                                    required
+                                                />
+                                                <span className="absolute start-4 top-1/2 -translate-y-1/2">
+                                                    <IconUser fill={true} />
+                                                </span>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div>
-                                        <label htmlFor="lastName">Last Name</label>
-                                        <div className="relative text-white-dark">
-                                            <input
-                                                id="lastName"
-                                                type="text"
-                                                placeholder="Enter Last Name"
-                                                value={lastName}
-                                                onChange={(e) => setLastName(e.target.value)}
-                                                className="form-input ps-10 placeholder:text-white-dark"
-                                                required
-                                            />
-                                            <span className="absolute start-4 top-1/2 -translate-y-1/2">
-                                                <IconUser fill={true} />
-                                            </span>
+                                        <div>
+                                            <label htmlFor="lastName">Last Name</label>
+                                            <div className="relative text-white-dark">
+                                                <input
+                                                    id="lastName"
+                                                    type="text"
+                                                    placeholder="Enter Last Name"
+                                                    value={lastName}
+                                                    onChange={(e) => setLastName(e.target.value)}
+                                                    className="form-input ps-10 placeholder:text-white-dark"
+                                                    required
+                                                />
+                                                <span className="absolute start-4 top-1/2 -translate-y-1/2">
+                                                    <IconUser fill={true} />
+                                                </span>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div>
-                                        <label htmlFor="Email">Email</label>
-                                        <div className="relative text-white-dark">
-                                            <input
-                                                id="Email"
-                                                type="email"
-                                                placeholder="Enter Email"
-                                                value={email}
-                                                onChange={(e) => setEmail(e.target.value)}
-                                                className="form-input ps-10 placeholder:text-white-dark"
-                                            />
-                                            <span className="absolute start-4 top-1/2 -translate-y-1/2">
-                                                <IconMail fill={true} />
-                                            </span>
+                                        <div>
+                                            <label htmlFor="Email">Email</label>
+                                            <div className="relative text-white-dark">
+                                                <input
+                                                    id="Email"
+                                                    type="email"
+                                                    placeholder="Enter Email"
+                                                    value={email}
+                                                    onChange={(e) => setEmail(e.target.value)}
+                                                    className="form-input ps-10 placeholder:text-white-dark"
+                                                />
+                                                <span className="absolute start-4 top-1/2 -translate-y-1/2">
+                                                    <IconMail fill={true} />
+                                                </span>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div>
-                                        <div className="flex gap-2">
-                                            <div className="w-1/3">
-                                                <label htmlFor="countryCode">Country</label>
-                                                <div className="relative text-white-dark">
-                                                    <select className="form-select text-white-dark" value={countryCode} onChange={(e) => setCountryCode(e.target.value)} required>
-                                                        <option>Select</option>
-                                                        {countries.map((country, idx) => (
-                                                            <option key={idx} value={country.code}>{`${country.country} (${country.code})`}</option>
-                                                        ))}
-                                                    </select>
+                                        <div>
+                                            <div className="flex gap-2">
+                                                <div className="w-1/3">
+                                                    <label htmlFor="countryCode">Country</label>
+                                                    <div className="relative text-white-dark">
+                                                        <select className="form-select text-white-dark" value={countryCode} onChange={(e) => setCountryCode(e.target.value)} required>
+                                                            <option value={91} selected>
+                                                                India (91)
+                                                            </option>
+                                                            {countries.map((country, idx) => (
+                                                                <option key={idx} value={country.code}>{`${country.country} (${country.code})`}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div className="w-2/3">
+                                                    <label htmlFor="mobile">Mobile</label>
+                                                    <div className="relative text-white-dark">
+                                                        <input
+                                                            id="mobile"
+                                                            type="text"
+                                                            placeholder="Enter Mobile"
+                                                            value={mobile}
+                                                            onChange={(e) => setMobile(e.target.value)}
+                                                            className="form-input ps-10 placeholder:text-white-dark"
+                                                        />
+                                                        <span className="absolute start-4 top-1/2 -translate-y-1/2">
+                                                            <IconPhone fill={true} />
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="w-2/3">
-                                                <label htmlFor="mobile">Mobile</label>
-                                                <div className="relative text-white-dark">
-                                                    <input
-                                                        id="mobile"
-                                                        type="text"
-                                                        placeholder="Enter Mobile"
-                                                        value={mobile}
-                                                        onChange={(e) => setMobile(e.target.value)}
-                                                        className="form-input ps-10 placeholder:text-white-dark"
-                                                    />
-                                                    <span className="absolute start-4 top-1/2 -translate-y-1/2">
-                                                        <IconPhone fill={true} />
-                                                    </span>
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center justify-between">
+                                                <label htmlFor="Password">Password</label>
+                                                <div onClick={() => setShowPass(!showPass)} className="hover:underline hover:cursor-pointer">
+                                                    Show Password
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center justify-between">
-                                            <label htmlFor="Password">Password</label>
-                                            <div onClick={() => setShowPass(!showPass)} className="hover:underline hover:cursor-pointer">
-                                                Show Password
+                                            <div className="relative text-white-dark">
+                                                <input
+                                                    id="Password"
+                                                    type={showPass ? 'text' : 'password'}
+                                                    value={password}
+                                                    onChange={(e) => setPassword(e.target.value)}
+                                                    placeholder="Enter Password"
+                                                    className="form-input ps-10 placeholder:text-white-dark"
+                                                />
+                                                <span className="absolute start-4 top-1/2 -translate-y-1/2">
+                                                    <IconLockDots fill={true} />
+                                                </span>
                                             </div>
                                         </div>
-                                        <div className="relative text-white-dark">
-                                            <input
-                                                id="Password"
-                                                type={showPass ? 'text' : 'password'}
-                                                value={password}
-                                                onChange={(e) => setPassword(e.target.value)}
-                                                placeholder="Enter Password"
-                                                className="form-input ps-10 placeholder:text-white-dark"
-                                            />
-                                            <span className="absolute start-4 top-1/2 -translate-y-1/2">
-                                                <IconLockDots fill={true} />
-                                            </span>
+                                        <div>
+                                            <label htmlFor="re-enterPassword">Re-Enter Password</label>
+                                            <div className="relative text-white-dark">
+                                                <input
+                                                    id="re-enterPassword"
+                                                    type={showPass ? 'text' : 'password'}
+                                                    placeholder="Re-Enter Password"
+                                                    value={reEnterPassword}
+                                                    onChange={(e) => setReEnterPassword(e.target.value)}
+                                                    className="form-input ps-10 placeholder:text-white-dark"
+                                                />
+                                                <span className="absolute start-4 top-1/2 -translate-y-1/2">
+                                                    <IconLockDots fill={true} />
+                                                </span>
+                                            </div>
                                         </div>
+                                        <button type="submit" onClick={submitForm} className="btn btn-gradient !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
+                                            {userLoading ? (
+                                                <>
+                                                    <span className="animate-spin border-2 border-white border-l-transparent rounded-full w-5 h-5 ltr:mr-4 rtl:ml-4 inline-block align-middle"></span>
+                                                    Loading...
+                                                </>
+                                            ) : (
+                                                `Sign Up`
+                                            )}
+                                        </button>
+                                    </form>
+                                    <div className="flex items-center justify-center mt-5 text-center">
+                                        {userError && `Some error occured. Please ensure that the email address or phone number has not been used already!`}
                                     </div>
-                                    <div>
-                                        <label htmlFor="re-enterPassword">Re-Enter Password</label>
-                                        <div className="relative text-white-dark">
-                                            <input
-                                                id="re-enterPassword"
-                                                type={showPass ? 'text' : 'password'}
-                                                placeholder="Re-Enter Password"
-                                                value={reEnterPassword}
-                                                onChange={(e) => setReEnterPassword(e.target.value)}
-                                                className="form-input ps-10 placeholder:text-white-dark"
-                                            />
-                                            <span className="absolute start-4 top-1/2 -translate-y-1/2">
-                                                <IconLockDots fill={true} />
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <button type="submit" onClick={submitForm} className="btn btn-gradient !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
-                                        {userLoading ? (
-                                            <>
-                                                <span className="animate-spin border-2 border-white border-l-transparent rounded-full w-5 h-5 ltr:mr-4 rtl:ml-4 inline-block align-middle"></span>
-                                                Loading...
-                                            </>
-                                        ) : (
-                                            `Sign Up`
-                                        )}
-                                    </button>
-                                </form>
-                                <div className="flex items-center justify-center mt-5 text-center">{userError && `Some error occured. Please ensure that the email address or phone number has not been used already!`}</div>
                                 </>
                             ) : (
                                 <>

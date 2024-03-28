@@ -13,6 +13,7 @@ import UserOTPVerification from "../models/otpModel.js";
 import axios from "axios";
 import Package from "../models/packageModel.js";
 import Revenue from "../models/revenueModel.js";
+import ProfilePic from "../models/profilePicModel.js";
 
 const generateRandomString = () => {
   const baseString = "RBD";
@@ -28,6 +29,7 @@ function generateOTP() {
 
 // Send OTP verification email
 const sendOTP = async ({ _id, email, countryCode, phone }, res) => {
+  console.log(countryCode, phone);
   try {
     const OTP = generateOTP();
 
@@ -54,7 +56,9 @@ const sendOTP = async ({ _id, email, countryCode, phone }, res) => {
 
     if (newOTP) {
       if (countryCode == 91) {
-        await transporter.sendMail(mailOptions);
+        // await transporter.sendMail(mailOptions);
+
+        console.log("Sending OTP via SMS");
 
         const response = await axios.get(
           `https://otp2.aclgateway.com/OTP_ACL_Web/OtpRequestListener?enterpriseid=stplotp&subEnterpriseid=stplotp&pusheid=stplotp&pushepwd=stpl_01&msisdn=${phone}&sender=HYBERE&msgtext=Welcome%20to%20Rubidya!%20Your%20OTP%20for%20registration%20is%20%20${OTP}.%20Please%20enter%20this%20code%20to%20complete%20your%20registration&dpi=1101544370000033504&dtm=1107170911722074274`
@@ -159,15 +163,6 @@ export const registerUser = asyncHandler(async (req, res) => {
   } else {
     const ownSponsorId = generateRandomString();
 
-    // if (countryCode) {
-    //   if (countryCode == +91) {
-    //     // Send OTP message
-    //   } else {
-    //   }
-    // }
-
-    // await sendMail(email, OTP);
-
     const createUser = await User.create({
       sponsor: null,
       firstName,
@@ -185,7 +180,7 @@ export const registerUser = asyncHandler(async (req, res) => {
 
     if (createUser) {
       sendOTP(
-        { _id: createUser._id, email: createUser.email, countryCode, phone },
+        { _id: createUser._id, email: createUser.email, countryCode: createUser.countryCode, phone: createUser.phone },
         res
       );
     } else {
@@ -359,6 +354,7 @@ export const verifyOTPForForget = asyncHandler(async (req, res) => {
 
 // Register User By Referral or direct registeration
 export const registerUserByReferral = asyncHandler(async (req, res) => {
+
   const { firstName, lastName, phone, countryCode, email, password, userId } =
     req.body;
 
@@ -604,7 +600,9 @@ export const verifyUser = asyncHandler(async (req, res) => {
 export const getUserProfile = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
-  const user = await User.findById(userId).select("-password");
+  const user = await User.findById(userId)
+    .populate("packageSelected")
+    .select("-password");
   if (user) {
     res.status(200).json({ sts: "01", msg: "Success", user });
   } else {
@@ -894,20 +892,6 @@ export const getStats = asyncHandler(async (req, res) => {
   }
 });
 
-// export const sendOTPTest = asyncHandler(async (req, res) => {
-//   const response = await axios.get(
-//     "https://otp2.aclgateway.com/OTP_ACL_Web/OtpRequestListener?enterpriseid=stplotp&subEnterpriseid=stplotp&pusheid=stplotp&pushepwd=stpl_01&msisdn=9744241239&sender=HYBERE&msgtext=Welcome%20to%20Rubidya!%20Your%20OTP%20for%20registration%20is%20%2012345.%20Please%20enter%20this%20code%20to%20complete%20your%20registration&dpi=1101544370000033504&dtm=1107170911722074274"
-//   );
-
-//   const dataFetched = response.data;
-
-//   if (dataFetched) {
-//     res.status(200).json({ msg: "OTP sent successfully" });
-//   } else {
-//     res.status(400).json({ msg: "Error in sending OTP" });
-//   }
-// });
-
 // Convert INR to rubidya
 export const convertINR = asyncHandler(async (req, res) => {
   const { amount } = req.body;
@@ -978,5 +962,33 @@ export const editUserProfile = asyncHandler(async (req, res) => {
     }
   } else {
     res.status(400).json({ sts: "00", msg: "User not found" });
+  }
+});
+
+// Upload profile picture
+export const uploadProfilePicture = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    res.status(400).json({ sts: "00", msg: "No file uploaded" });
+  }
+
+  const { path: filePath, mimetype: fileType, filename: fileName } = req.file;
+
+  const userId = req.user._id;
+
+  const profilePic = await ProfilePic.findOneAndUpdate(
+    { userId: userId },
+    { fileType: fileType, fileName: fileName, filePath: filePath },
+    { upsert: true, new: true }
+  );
+
+  // Update user with profilePic id
+  const updateUser = await User.findByIdAndUpdate(userId, {
+    $set: { profilePic: profilePic._id },
+  });
+
+  if (profilePic && updateUser) {
+    res.status(201).json({ sts: "01", msg: "Image uploaded successfully" });
+  } else {
+    res.status(400).json({ sts: "00", msg: "Error in uploading image" });
   }
 });
