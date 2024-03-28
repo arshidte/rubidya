@@ -5,7 +5,6 @@ import bcrypt from "bcryptjs";
 
 import Level from "../models/levelModel.js";
 import Media from "../models/mediaModel.js";
-import sharp from "sharp";
 
 import { transporter } from "../config/nodeMailer.js";
 import UserOTPVerification from "../models/otpModel.js";
@@ -180,7 +179,12 @@ export const registerUser = asyncHandler(async (req, res) => {
 
     if (createUser) {
       sendOTP(
-        { _id: createUser._id, email: createUser.email, countryCode: createUser.countryCode, phone: createUser.phone },
+        {
+          _id: createUser._id,
+          email: createUser.email,
+          countryCode: createUser.countryCode,
+          phone: createUser.phone,
+        },
         res
       );
     } else {
@@ -354,7 +358,6 @@ export const verifyOTPForForget = asyncHandler(async (req, res) => {
 
 // Register User By Referral or direct registeration
 export const registerUserByReferral = asyncHandler(async (req, res) => {
-
   const { firstName, lastName, phone, countryCode, email, password, userId } =
     req.body;
 
@@ -414,11 +417,20 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
 
 // Login user
 export const loginUser = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, adminLogin } = req.body;
 
   const user = await User.findOne({ email });
 
   if (user && (await user.matchPassword(password))) {
+    if (adminLogin) {
+      if (!user.isAdmin) {
+        res.status(401).json({
+          sts: "00",
+          msg: "You are not authorized to access this page",
+        });
+      }
+    }
+
     const token = jwt.sign(
       { userId: user._id },
       "secret_of_jwt_for_rubidya_5959",
@@ -794,12 +806,6 @@ export const deductRubideum = asyncHandler(async (req, res) => {
       msg: "Rubideum deducted successfully",
       rubideumToPass,
     });
-    // user.isAccountVerified = true;
-    // const updatedUser = await user.save();
-    // if (updatedUser) {
-    // } else {
-    //   res.status(400).json({ sts: "00", msg: "Error in deducting rubideum" });
-    // }
   } else {
     res.status(400).json({
       sts: "00",
@@ -990,5 +996,62 @@ export const uploadProfilePicture = asyncHandler(async (req, res) => {
     res.status(201).json({ sts: "01", msg: "Image uploaded successfully" });
   } else {
     res.status(400).json({ sts: "00", msg: "Error in uploading image" });
+  }
+});
+
+// Follow a person
+export const follow = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const { followerId } = req.body;
+
+  const updateUser = await User.findByIdAndUpdate(
+    userId,
+    {
+      $push: { following: followerId },
+    },
+    { new: true }
+  );
+
+  const updateFollower = await User.findByIdAndUpdate(
+    followerId,
+    {
+      $push: { followers: userId },
+    },
+    { new: true }
+  );
+
+  if (updateUser && updateFollower) {
+    res.status(200).json({ sts: "01", msg: "Followed successfully" });
+  } else {
+    res.status(400).json({ sts: "00", msg: "Error in following" });
+  }
+});
+
+// Unfollow a person
+export const unfollow = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const { followerId } = req.body;
+
+  const updateUser = await User.findByIdAndUpdate(
+    userId,
+    {
+      $pull: { following: followerId },
+    },
+    { new: true }
+  );
+
+  // Update follower
+  const updateFollower = await User.findByIdAndUpdate(
+    followerId,
+    {
+      $pull: { followers: userId },
+    },
+    { new: true }
+  );
+
+  if (updateUser && updateFollower) {
+    res.status(200).json({ sts: "01", msg: "Unfollowed successfully" });
+  } else {
+    res.status(400).json({ sts: "00", msg: "Error in unfollowing" });
   }
 });

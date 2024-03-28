@@ -7,7 +7,6 @@ import jwt from "jsonwebtoken";
 
 // Get all users to admin
 export const getAllusers = asyncHandler(async (req, res) => {
-  
   const users = await User.find().populate("packageSelected");
 
   if (users) {
@@ -174,14 +173,16 @@ export const splitProfit = asyncHandler(async (req, res) => {
   if (totalAmount.monthlyRevenue) {
     if (primeUsers.length > 0) {
       // Total profit to share to prime users
-      const primeProfit = (
-        totalAmount.monthlyRevenue *
-        (primeMemberProfit.memberProfit / 100)
-      ).toFixed(2);
+      const primeProfit = parseFloat(
+        (
+          totalAmount.monthlyRevenue *
+          (primeMemberProfit.memberProfit / 100)
+        ).toFixed(2)
+      );
 
       if (primeProfit > 0) {
         // Profit per person
-        const profitPerPerson = primeProfit / primeUsers.length;
+        const profitPerPerson = parseFloat(primeProfit / primeUsers.length);
 
         if (profitPerPerson > 0) {
           primeUsers.forEach(async (user) => {
@@ -208,14 +209,16 @@ export const splitProfit = asyncHandler(async (req, res) => {
 
     if (goldUsers.length > 0) {
       // Total profit to share to gold users
-      const goldProfit = (
-        totalAmount.monthlyRevenue *
-        (goldMemberProfit.memberProfit / 100)
-      ).toFixed(2);
+      const goldProfit = parseFloat(
+        (
+          totalAmount.monthlyRevenue *
+          (goldMemberProfit.memberProfit / 100)
+        ).toFixed(2)
+      );
 
       if (goldProfit > 0) {
         // Profit per person
-        const profitPerPerson = goldProfit / goldUsers.length;
+        const profitPerPerson = parseFloat(goldProfit / goldUsers.length);
 
         if (profitPerPerson > 0) {
           goldUsers.forEach(async (user) => {

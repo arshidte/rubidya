@@ -8,6 +8,7 @@ import {
   convertINR,
   deductRubideum,
   editUserProfile,
+  follow,
   getDirectReferredUsers,
   getMedia,
   getStats,
@@ -20,6 +21,7 @@ import {
   // sendOTPTest,
   sendOTPforForget,
   syncWallet,
+  unfollow,
   uploadImage,
   uploadProfilePicture,
   verifyOTP,
@@ -113,5 +115,11 @@ router
     resizeAndCompressImage,
     uploadProfilePicture
   );
+
+// Follow a person
+router.route("/follow").post(protect, follow);
+
+// Unfollow a person
+router.route("/unfollow").post(protect, unfollow);
 
 export default router;

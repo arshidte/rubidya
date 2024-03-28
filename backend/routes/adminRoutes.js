@@ -36,7 +36,7 @@ router.route("/add-package").post(protect, addPackage);
 router.route("/edit-package").put(protect, editPackage);
 
 // Split profit
-router.route("/split-profit").get(protect, splitProfit);
+router.route("/split-profit").get(splitProfit);
 
 // Activate/deactivate the user
 router.route("/activation-handle").post(protect, handleActivation)

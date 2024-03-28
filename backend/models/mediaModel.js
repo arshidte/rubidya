@@ -22,6 +22,12 @@ const mediaSchema = new mongoose.Schema(
     description: {
       type: String,
     },
+    likedBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     likeCount: {
       type: Number,
       default: 0,
