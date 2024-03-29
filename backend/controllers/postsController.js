@@ -1,8 +1,9 @@
 import asyncHandler from "../middleware/asyncHandler.js";
 import Media from "../models/mediaModel.js";
 
-export const likeAPost = asyncHandler(async (req, res) => {
+import User from "../models/userModel.js";
 
+export const likeAPost = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const { postId } = req.body;
 
@@ -10,7 +11,6 @@ export const likeAPost = asyncHandler(async (req, res) => {
   const post = await Media.findById(postId);
 
   if (post) {
-
     if (post.likedBy.includes(userId)) {
       const updatePost = await Media.findByIdAndUpdate(
         postId,

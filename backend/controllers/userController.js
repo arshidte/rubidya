@@ -609,6 +609,15 @@ export const verifyUser = asyncHandler(async (req, res) => {
 });
 
 // Get user profile
+const convertDate = (originalDate) => {
+  const day = originalDate.getDate();
+  const month = originalDate.getMonth() + 1;
+  const year = originalDate.getFullYear();
+
+  const formattedDate = `${day}/${month}/${year}`;
+  return formattedDate;
+};
+
 export const getUserProfile = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
@@ -616,7 +625,15 @@ export const getUserProfile = asyncHandler(async (req, res) => {
     .populate("packageSelected")
     .select("-password");
   if (user) {
-    res.status(200).json({ sts: "01", msg: "Success", user });
+    const response = {
+      sts: "01",
+      msg: "Success",
+      user: {
+        ...user._doc,
+        updatedDOB: user.dateOfBirth ? convertDate(user.dateOfBirth) : convertDate(user.createdAt),
+      },
+    };
+    res.status(200).json(response);
   } else {
     res.status(404).json({ sts: "00", msg: "User not found" });
   }
@@ -1004,26 +1021,27 @@ export const follow = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const { followerId } = req.body;
 
-  const updateUser = await User.findByIdAndUpdate(
-    userId,
-    {
-      $push: { following: followerId },
-    },
-    { new: true }
-  );
+  const user = await User.findById(userId);
 
-  const updateFollower = await User.findByIdAndUpdate(
-    followerId,
-    {
-      $push: { followers: userId },
-    },
-    { new: true }
-  );
-
-  if (updateUser && updateFollower) {
-    res.status(200).json({ sts: "01", msg: "Followed successfully" });
+  if (user.following.includes(followerId)) {
+    res.status(400).json({ sts: "00", msg: "Already following" });
   } else {
-    res.status(400).json({ sts: "00", msg: "Error in following" });
+    user.following.push(followerId);
+    const updateUser = await user.save();
+
+    const updateFollower = await User.findByIdAndUpdate(
+      followerId,
+      {
+        $push: { followers: userId },
+      },
+      { new: true }
+    );
+
+    if (updateUser && updateFollower) {
+      res.status(200).json({ sts: "01", msg: "Followed successfully" });
+    } else {
+      res.status(400).json({ sts: "00", msg: "Error in following" });
+    }
   }
 });
 
@@ -1032,26 +1050,32 @@ export const unfollow = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const { followerId } = req.body;
 
-  const updateUser = await User.findByIdAndUpdate(
-    userId,
-    {
-      $pull: { following: followerId },
-    },
-    { new: true }
-  );
+  const user = await User.findById(userId);
 
-  // Update follower
-  const updateFollower = await User.findByIdAndUpdate(
-    followerId,
-    {
-      $pull: { followers: userId },
-    },
-    { new: true }
-  );
-
-  if (updateUser && updateFollower) {
-    res.status(200).json({ sts: "01", msg: "Unfollowed successfully" });
+  if (!user.following.includes(followerId)) {
+    res.status(400).json({ sts: "00", msg: "Not following" });
   } else {
-    res.status(400).json({ sts: "00", msg: "Error in unfollowing" });
+    const updateUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        $pull: { following: followerId },
+      },
+      { new: true }
+    );
+
+    // Update follower
+    const updateFollower = await User.findByIdAndUpdate(
+      followerId,
+      {
+        $pull: { followers: userId },
+      },
+      { new: true }
+    );
+
+    if (updateUser && updateFollower) {
+      res.status(200).json({ sts: "01", msg: "Unfollowed successfully" });
+    } else {
+      res.status(400).json({ sts: "00", msg: "Error in unfollowing" });
+    }
   }
 });
