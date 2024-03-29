@@ -630,7 +630,9 @@ export const getUserProfile = asyncHandler(async (req, res) => {
       msg: "Success",
       user: {
         ...user._doc,
-        updatedDOB: user.dateOfBirth ? convertDate(user.dateOfBirth) : convertDate(user.createdAt),
+        updatedDOB: user.dateOfBirth
+          ? convertDate(user.dateOfBirth)
+          : convertDate(user.createdAt),
       },
     };
     res.status(200).json(response);
@@ -645,6 +647,8 @@ export const uploadImage = asyncHandler(async (req, res) => {
     res.status(400).json({ sts: "00", msg: "No file uploaded" });
   }
 
+  const { description } = req.body;
+
   const { path: filePath, mimetype: fileType, filename: fileName } = req.file;
 
   const userId = req.user._id;
@@ -653,6 +657,7 @@ export const uploadImage = asyncHandler(async (req, res) => {
     userId,
     fileType,
     fileName,
+    description,
     filePath,
   });
 
