@@ -24,7 +24,7 @@ export const fetchUser = createAsyncThunk('fetchUser', async (data: any) => {
         headers: { 'content-type': 'application/json' },
     };
 
-    const response = await axios.post(`${URL}/api/users/login`, { email, password }, config);
+    const response = await axios.post(`${URL}/api/users/login`, { email, password, adminLogin: true }, config);
 
     return response.data;
 });

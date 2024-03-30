@@ -71,3 +71,47 @@ export const resizeAndCompressImage = async (req, res, next) => {
     return res.status(500).json({ sts: "00", msg: "Error processing image" });
   }
 };
+
+// Middleware to resize and compress images before saving for profile picture
+export const resizeAndCompressImageForProfilePic = async (req, res, next) => {
+  if (!req.file) {
+    return res.status(400).json({ sts: "00", msg: "No file uploaded" });
+  }
+
+  try {
+    // Resize and compress image
+    const compressedBuffer = await sharp(req.file.buffer)
+      .resize({ width: 600 }) // Resize to desired width
+      .jpeg({ quality: 80 }) // Compress to JPEG format with specified quality
+      .toBuffer(); // Convert the image to a buffer
+
+    // Generate random filename
+    const timestamp = Date.now();
+    const randomString = generateRandomString(10); // Adjust length as needed
+    const extension = path.extname(req.file.originalname);
+    const randomFilename = `${timestamp}-${randomString}${extension}`;
+
+    // Write compressed image buffer to disk
+    try {
+      fs.writeFileSync(
+        `/var/www/seclob/rubidya/uploads/profilePic/${randomFilename}`,
+        // `uploads/profilePic/${randomFilename}`,
+        compressedBuffer
+      );
+    } catch (error) {
+      console.error(error);
+    }
+
+    // Add properties to req.file
+    req.file.path = `uploads/profilePic/${randomFilename}`; // Example path
+    req.file.filename = randomFilename;
+    req.file.mimetype = "image/jpeg"; // Adjust as necessary
+
+    req.file.buffer = compressedBuffer; // Replace the original buffer with the compressed one
+
+    next(); // Move to the next middleware
+  } catch (error) {
+    console.error("Error processing image:", error);
+    return res.status(500).json({ sts: "00", msg: "Error processing image" });
+  }
+};

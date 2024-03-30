@@ -20,6 +20,8 @@ connectDB();
 // Uploads directory
 app.use("/uploads", express.static("/var/www/seclob/rubidya/uploads"));
 // app.use("/uploads", express.static("/uploads"));
+app.use("/uploads/profilePic", express.static("/var/www/seclob/rubidya/uploads/profilePic"));
+// app.use("/uploads/profilePic", express.static("/uploads/profilePic"));
 // Uploads directory
 
 // Setup cron job
@@ -35,7 +37,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/posts", postRoutes)
+app.use("/api/posts", postRoutes);
 // API routes
 
 app.use(errorHandler);

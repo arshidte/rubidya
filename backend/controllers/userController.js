@@ -419,7 +419,16 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
 export const loginUser = asyncHandler(async (req, res) => {
   const { email, password, adminLogin } = req.body;
 
-  const user = await User.findOne({ email });
+  if (!email || !password) {
+    res
+      .status(400)
+      .json({ sts: "00", msg: "Please enter all required fields" });
+  }
+
+  let user = await User.findOne({ email });
+  if (!user) {
+    user = await User.findOne({ phone: parseInt(email) });
+  }
 
   if (user && (await user.matchPassword(password))) {
     if (adminLogin) {
