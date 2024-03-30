@@ -1021,6 +1021,23 @@ export const uploadProfilePicture = asyncHandler(async (req, res) => {
   }
 });
 
+// Get user profile picture
+export const getProfilePicture = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const profilePic = await ProfilePic.findOne({ userId: userId });
+
+  if (profilePic) {
+    res.status(200).json({
+      sts: "01",
+      msg: "Profile picture fetched successfully",
+      profilePic,
+    });
+  } else {
+    res.status(400).json({ sts: "00", msg: "No profile picture found" });
+  }
+});
+
 // Follow a person
 export const follow = asyncHandler(async (req, res) => {
   const userId = req.user._id;

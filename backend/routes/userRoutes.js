@@ -11,6 +11,7 @@ import {
   follow,
   getDirectReferredUsers,
   getMedia,
+  getProfilePicture,
   getStats,
   getUserProfile,
   loginUser,
@@ -115,6 +116,9 @@ router
     resizeAndCompressImage,
     uploadProfilePicture
   );
+
+// Get profile picture
+router.route("/get-profile-pic").get(protect, getProfilePicture);
 
 // Follow a person
 router.route("/follow").post(protect, follow);
