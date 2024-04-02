@@ -14,6 +14,8 @@ const importData = async () => {
     await Revenue.deleteMany();
     const createdRevenue = await Revenue.insertMany(revenue);
 
+    const updatePackage = await Package.updateMany({}, { $set: { users: [] } });
+
     console.log("Data cleared");
     process.exit();
   } catch (error) {

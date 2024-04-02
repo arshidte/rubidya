@@ -10,6 +10,7 @@ import {
   editUserProfile,
   follow,
   getDirectReferredUsers,
+  getLevelTree,
   getMedia,
   getProfilePicture,
   getStats,
@@ -23,6 +24,7 @@ import {
   sendOTPforForget,
   syncWallet,
   unfollow,
+  // updateNewPackage,
   uploadImage,
   uploadProfilePicture,
   verifyOTP,
@@ -126,5 +128,11 @@ router.route("/follow").post(protect, follow);
 
 // Unfollow a person
 router.route("/unfollow").post(protect, unfollow);
+
+// Get the level tree
+router.route("/get-level-tree").get(protect, getLevelTree);
+
+// Remove repeating values
+// router.route("/update-package").get(updateNewPackage);
 
 export default router;

@@ -399,6 +399,7 @@ export const registerUserByReferral = asyncHandler(async (req, res) => {
           { new: true }
         );
       }
+
       sendOTP(
         {
           _id: createUser._id,
@@ -680,7 +681,10 @@ export const uploadImage = asyncHandler(async (req, res) => {
 // Get all the media uploaded by the user
 export const getMedia = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const media = await Media.find({ userId });
+  const media = await Media.find({ userId }).populate(
+    "userId",
+    "firstName lastName"
+  );
   if (media) {
     res.status(200).json({ sts: "01", msg: "Success", media });
   } else {
@@ -897,6 +901,7 @@ export const getStats = asyncHandler(async (req, res) => {
         memberProfit: "$memberProfit",
         packageSlug: "$packageSlug",
         packageName: "$packageName",
+        amount: "$amount",
         usersCount: { $size: "$users" },
       },
     },
@@ -905,7 +910,7 @@ export const getStats = asyncHandler(async (req, res) => {
         memberProfit: { $gt: 0 },
       },
     },
-  ]);
+  ]).sort({ amount: 1 });
 
   // Get the monthly revenue from the revenue collection
   const revenue = await Revenue.findOne({});
@@ -1110,3 +1115,54 @@ export const unfollow = asyncHandler(async (req, res) => {
     }
   }
 });
+
+// Get the level tree
+export const getLevelTree = asyncHandler(async (req, res) => {
+  // Get user
+  const { userId } = req.body;
+
+  // Get the referred users
+  const user = await User.findById(userId).populate("referrals");
+
+  console.log(user.referrals);
+});
+
+// Remove repeating values
+// export const updateNewPackage = asyncHandler(async (req, res) => {
+//   // Get prime package ID
+//   const packageId = await Package.findOne({
+//     packageSlug: "prime-subscription",
+//   });
+
+//   // Get all users with prime-subscription
+//   const users = await User.aggregate([
+//     {
+//       $match: {
+//         packageName: { $exists: true, $ne: [] },
+//       },
+//     },
+//     {
+//       $addFields: {
+//         lastPackageName: { $arrayElemAt: ["$packageName", -1] },
+//       },
+//     },
+//     {
+//       $match: {
+//         lastPackageName: "prime-subscription",
+//       },
+//     },
+//   ]);
+
+//   let updated;
+//   for (const user of users) {
+//     const userDocument = await User.findById(user._id);
+//     if (userDocument) {
+//       userDocument.packageSelected = packageId._id;
+//       updated = await userDocument.save();
+//     }
+//   }
+
+//   if (updated) {
+//     res.status(200).json({ sts: "01", msg: "Updated successfully" });
+//   }
+// });

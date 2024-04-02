@@ -89,7 +89,7 @@ export const editPackage = asyncHandler(async (req, res) => {
 
 // Get all packages
 export const getAllPackages = asyncHandler(async (req, res) => {
-  const packages = await Package.find();
+  const packages = await Package.find().sort({ amount: 1 });
 
   if (packages) {
     res.status(200).json({ sts: "01", msg: "Success", packages });

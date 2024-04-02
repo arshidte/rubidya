@@ -8,6 +8,7 @@ import {
   getRevenueToAdmin,
   getUsersCount,
   handleActivation,
+  // shareSplitting,
   splitProfit,
 } from "../controllers/adminController.js";
 import { protect } from "../middleware/authMiddleware.js";
@@ -47,5 +48,7 @@ router.route("/edit-user").put(protect, editProfileByAdmin)
 // Get revenue to admin
 router.route("/get-revenue").get(protect, getRevenueToAdmin)
 
+// Share splitting
+// router.route("/share-splitting").get(protect, shareSplitting);
 
 export default router;

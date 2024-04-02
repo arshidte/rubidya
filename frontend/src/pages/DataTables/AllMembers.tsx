@@ -51,10 +51,6 @@ const AllMembers = () => {
         dispatch(setPageTitle('All Members'));
     });
 
-    useEffect(() => {
-        dispatch(getAllUsersToAdmin());
-    }, [activationData, editUserByAdminData]);
-
     const [page, setPage] = useState(1);
     const PAGE_SIZES = [10, 20, 30, 50, 100];
     const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
@@ -66,21 +62,26 @@ const AllMembers = () => {
 
     const [modal5, setModal5] = useState(false);
 
+    useEffect(() => {
+        const data = { pageSize, page };
+        dispatch(getAllUsersToAdmin(data));
+    }, [activationData, editUserByAdminData, dispatch, page, pageSize]);
+
     // Inside the AllMembers component
     useEffect(() => {
         if (rowData) {
             setInitialRecords(sortBy(rowData, 'id'));
         }
-    }, [rowData]);
+    }, [rowData, dispatch, page, pageSize]);
 
     useEffect(() => {
         setPage(1);
     }, [pageSize]);
 
     useEffect(() => {
-        const from = (page - 1) * pageSize;
-        const to = from + pageSize;
-        setRecordsData([...initialRecords.slice(from, to)]);
+        // const from = (page - 1) * pageSize;
+        // const to = from + pageSize;
+        setRecordsData([...initialRecords]);
     }, [page, pageSize, initialRecords, rowData]);
 
     useEffect(() => {
@@ -431,17 +432,49 @@ const AllMembers = () => {
                                 ),
                             },
                         ]}
-                        totalRecords={initialRecords.length}
-                        recordsPerPage={pageSize}
-                        page={page}
-                        onPageChange={(p) => setPage(p)}
-                        recordsPerPageOptions={PAGE_SIZES}
-                        onRecordsPerPageChange={setPageSize}
-                        sortStatus={sortStatus}
-                        onSortStatusChange={setSortStatus}
+                        // totalRecords={initialRecords.length}
+                        // recordsPerPage={pageSize}
+                        // page={page}
+                        // onPageChange={(p) => {
+                        //     console.log(p);
+                        //     setPage(p);
+                        //     const data = { pageSize, page };
+                        //     dispatch(getAllUsersToAdmin(data));
+                        // }}
+                        // recordsPerPageOptions={PAGE_SIZES}
+                        // onRecordsPerPageChange={setPageSize}
+                        // sortStatus={sortStatus}
+                        // onSortStatusChange={setSortStatus}
                         minHeight={200}
-                        paginationText={({ from, to, totalRecords }) => `Showing  ${from} to ${to} of ${totalRecords} entries`}
+                        // paginationText={({ from, to, totalRecords }) => `Showing  ${from} to ${to} of ${totalRecords} entries`}
                     />
+                </div>
+                <div className="flex justify-end items-center gap-6">
+                    <button
+                        className="bg-slate-600 p-2 rounded-3xl text-white"
+                        onClick={() => {
+                            setPage(page - 1);
+                            const data = { pageSize, page };
+                            dispatch(getAllUsersToAdmin(data));
+                        }}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+                            <path d="M15.293 3.293 6.586 12l8.707 8.707 1.414-1.414L9.414 12l7.293-7.293-1.414-1.414z" />
+                        </svg>
+                    </button>
+                    <>{page}</>
+                    <button
+                        className="bg-primary p-2 rounded-3xl text-white"
+                        onClick={() => {
+                            setPage(page + 1);
+                            const data = { pageSize, page };
+                            dispatch(getAllUsersToAdmin(data));
+                        }}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+                            <path d="M7.293 4.707 14.586 12l-7.293 7.293 1.414 1.414L17.414 12 8.707 3.293 7.293 4.707z" />
+                        </svg>
+                    </button>
                 </div>
                 <Transition appear show={modal21} as={Fragment}>
                     <Dialog

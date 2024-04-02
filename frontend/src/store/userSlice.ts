@@ -3,9 +3,11 @@ import axios from 'axios';
 import { URL } from '../Constants';
 
 // Get all users to admin
-export const getAllUsersToAdmin = createAsyncThunk('getAllUsers', async () => {
+export const getAllUsersToAdmin = createAsyncThunk('getAllUsers', async (data: any) => {
     const token: any = localStorage.getItem('userInfo');
     const parsedData = JSON.parse(token);
+    const { pageSize, page } = data;
+    console.log(pageSize, page);
 
     const config = {
         headers: {
@@ -14,7 +16,7 @@ export const getAllUsersToAdmin = createAsyncThunk('getAllUsers', async () => {
         },
     };
 
-    const response = await axios.get(`${URL}/api/admin/get-all-users`, config);
+    const response = await axios.get(`${URL}/api/admin/get-all-users?page=${page}&limit=${pageSize}`, config);
 
     return response.data;
 });

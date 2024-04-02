@@ -6,53 +6,54 @@ import User from "../models/userModel.js";
 import jwt from "jsonwebtoken";
 
 // Get all users to admin
+// export const getAllusers = asyncHandler(async (req, res) => {
+
+//   const users = await User.find().populate("packageSelected");
+
+//   if (users) {
+//     res.status(200).json(users);
+//   } else {
+//     res.status(404).json({ message: "No users found" });
+//   }
+// });
+
+// With pagination
 export const getAllusers = asyncHandler(async (req, res) => {
-  const users = await User.find().populate("packageSelected");
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+
+  const userCount = await User.countDocuments({});
+
+  const users = await User.find()
+    .select("-password")
+    .skip(startIndex)
+    .limit(limit);
 
   if (users) {
+    const pagination = {};
+
+    if (endIndex < userCount) {
+      pagination.next = {
+        page: page + 1,
+        limit: limit,
+      };
+    }
+
+    if (startIndex > 0) {
+      pagination.prev = {
+        page: page - 1,
+        limit: limit,
+      };
+    }
+
     res.status(200).json(users);
   } else {
     res.status(404).json({ message: "No users found" });
   }
 });
-
-// With pagination
-// export const getAllusers = asyncHandler(async (req, res) => {
-//   const page = parseInt(req.query.page) || 1;
-//   const limit = parseInt(req.query.limit) || 10;
-
-//   const startIndex = (page - 1) * limit;
-//   const endIndex = page * limit;
-
-//   const userCount = await User.countDocuments({});
-
-//   const users = await User.find()
-//     .select("-password")
-//     .skip(startIndex)
-//     .limit(limit);
-
-//   if (users) {
-//     const pagination = {};
-
-//     if (endIndex < userCount) {
-//       pagination.next = {
-//         page: page + 1,
-//         limit: limit,
-//       };
-//     }
-
-//     if (startIndex > 0) {
-//       pagination.prev = {
-//         page: page - 1,
-//         limit: limit,
-//       };
-//     }
-
-//     res.status(200).json({ users, pagination });
-//   } else {
-//     res.status(404).json({ message: "No users found" });
-//   }
-// });
 
 // Add 10 level percentages
 export const addLevelPercentages = asyncHandler(async (req, res) => {
@@ -332,3 +333,54 @@ export const editProfileByAdmin = asyncHandler(async (req, res) => {
     throw new Error("Please pass the userId");
   }
 });
+
+// Share splitting (A percentage of profit will be given to users who brings 100 people of similar package and 1000 people in total under his 10 level tree)
+
+// export const shareSplitting = asyncHandler(async (req, res) => {
+
+//   const user = await User.findById(req.user._id);
+
+//   if (user) {
+//     // Get the count of referred users
+//     const referredUsersCount = user.referrals.length;
+
+//     if (referredUsersCount >= 2) {
+//       // Check the package of each user and increment each package count
+//       const referredUsers = user.referrals;
+
+//       let packageCounts = {};
+
+//       for (let i = 0; i < referredUsers.length; i++) {
+//         const referredUser = await User.findOne({
+//           _id: referredUsers[i],
+//         });
+
+//         // console.log(`This is referred user: ${referredUser}`);
+
+//         if (referredUser) {
+//           const referredUserPackage = await Package.findOne({
+//             _id: referredUser.packageSelected,
+//           });
+
+//           if (referredUserPackage) {
+//             if (packageCounts[referredUserPackage.packageSlug]) {
+//               packageCounts[referredUserPackage.packageSlug] += 1;
+//             } else {
+//               packageCounts[referredUserPackage.packageSlug] = 1;
+//             }
+//           } else {
+//             continue;
+//           }
+//         } else {
+//           continue;
+//         }
+//       }
+
+//       console.log(packageCounts);
+
+//       res.status(201).json({
+//         message: "Profit splitted successfully",
+//       });
+//     }
+//   }
+// });
