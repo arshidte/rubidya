@@ -443,7 +443,7 @@ const Register = () => {
                                                 <div className="w-1/3">
                                                     <label htmlFor="countryCode">Country</label>
                                                     <div className="relative text-white-dark">
-                                                        <select className="form-select text-white-dark" value={countryCode} onChange={(e) => setCountryCode(e.target.value)} required>
+                                                        <select className="form-select text-white-dark" defaultValue={countryCode} onChange={(e) => setCountryCode(e.target.value)} required>
                                                             <option value={91} selected>
                                                                 India (91)
                                                             </option>

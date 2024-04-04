@@ -13,6 +13,7 @@ import axios from "axios";
 import Package from "../models/packageModel.js";
 import Revenue from "../models/revenueModel.js";
 import ProfilePic from "../models/profilePicModel.js";
+import mongoose from "mongoose";
 
 const generateRandomString = () => {
   const baseString = "RBD";
@@ -472,149 +473,278 @@ export const loginUser = asyncHandler(async (req, res) => {
 });
 
 // Verify user (Call this after the user successfully did the payment)
-const splitCommissions = async (user, amount, levels, percentages) => {
-  if (!user || levels === 0) {
-    return;
+// First we will call deduct rubideum API. After that we have to call the verify user API.
+// Calculate Rubideum
+export const deductRubideum = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const { amount } = req.body;
+
+  const user = await User.findById(userId);
+
+  if (
+    !user.payId ||
+    !user.uniqueId ||
+    user.payId === "" ||
+    user.uniqueId === ""
+  ) {
+    res.status(400);
+    throw new Error("Please send the payId and uniqueId");
   }
 
-  const commission = (percentages[0] / 100) * amount;
+  // API to fetch the current market value of Rubideum
+  const currentValueResponse = await axios.get(
+    "https://pwyfklahtrh.rubideum.net/api/endPoint1/RBD_INR"
+  );
 
-  const sponsor = await User.findById(user.sponsor);
+  const currentValue = currentValueResponse.data.data.last_price;
 
-  if (sponsor) {
-    // const walletAmount =
-    //   Math.round((sponsor.walletAmount + commission) * 10) / 10;
+  // Rubideum to pass
+  const rubideumToPass = amount / currentValue;
 
-    if (!sponsor.walletAmount) {
-      sponsor.walletAmount = commission;
-    } else {
-      sponsor.walletAmount += commission;
+  // API to deduct balance
+  const response = await axios.post(
+    "https://pwyfklahtrh.rubideum.net/basic/deductBalanceAuto",
+    {
+      payId: user.payId,
+      uniqueId: user.uniqueId,
+      amount: rubideumToPass,
+      currency: "RBD",
     }
+  );
 
-    sponsor.transactions.push({
-      amount: commission,
-      kind: "Level commission",
-      fromWhom: user.name,
-      level: levels,
-      percentage: percentages[0],
-      status: "approved",
+  const dataFetched = response.data;
+
+  if (dataFetched.success === 1) {
+    res.status(200).json({
+      sts: "01",
+      msg: "Rubideum deducted successfully",
+      rubideumToPass,
     });
-
-    if (!sponsor.totalReferralAmount) {
-      sponsor.totalReferralAmount = commission;
-    } else {
-      sponsor.totalReferralAmount += commission;
-    }
-
-    if (!sponsor.overallAmount) {
-      sponsor.overallAmount = commission;
-    } else {
-      sponsor.overallAmount += commission;
-    }
-
-    await sponsor.save();
-
-    splitCommissions(sponsor, amount, levels - 1, percentages.slice(1));
   } else {
-    return;
+    res.status(400).json({
+      sts: "00",
+      msg: "Deducting Rubideum failed. Check your Rubideum balance",
+    });
   }
-};
+});
 
 // Verify user API
 export const verifyUser = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
-  // Send the original amount or the package selected also inorder to detect the package.
-
+  // Send the original amount and the package selected.
   const { amount, packageId } = req.body;
 
-  // Convert the amount type to number
-  const newAmount = parseFloat(amount);
-
-  if (!newAmount || !packageId) {
-    res.status(400);
-    throw new Error("Please send the newAmount and package");
-  }
-
-  // Get the package
-  const selectedPackage = await Package.findById(packageId);
-
-  const revenue = await Revenue.find({});
-
-  let newAmountToaddToMonth = 0;
-  let newAmountToaddToTotal = 0;
-  if (revenue) {
-    newAmountToaddToMonth = parseFloat(revenue[0].monthlyRevenue + newAmount);
-    newAmountToaddToTotal = parseFloat(revenue[0].totalRevenue + newAmount);
+  if (!amount || !packageId) {
+    res
+      .status(400)
+      .json({ sts: "00", msg: "Please send the amount and package" });
   } else {
-    newAmountToaddToMonth = newAmount;
-    newAmountToaddToTotal = newAmount;
-  }
-
-  const updatedRevenue = await Revenue.findOneAndUpdate(
-    {},
-    {
-      $set: {
-        totalRevenue: newAmountToaddToTotal,
-        monthlyRevenue: newAmountToaddToMonth,
-      },
-    },
-    { new: true, upsert: true }
-  );
-
-  if (!selectedPackage) {
-    res.status(400);
-    throw new Error("Please select a valid package");
-  }
-
-  const user = await User.findById(userId);
-
-  if (user) {
-    user.isAccountVerified = true;
-    user.packageSelected = packageId;
-
-    const usersToUpdate = await User.find({
-      packageName: { $exists: true, $type: "string" },
-    });
-
-    user.packageName.push(selectedPackage.packageSlug);
-
-    // Push the user to the users in package
-    const updateSelectedPackage = await Package.findByIdAndUpdate(packageId, {
-      $push: { users: userId },
-    });
-
-    // Show amount spend transaction in user's transactions
-    // user.transactions.push({
-    //   amount,
-    //   kind: "premium",
-    //   fromWhom: "self",
-    //   status: "approved",
-    // });
-
-    const level = await Level.findOne();
-
-    const percentageArray = level.levelPercentages;
-
-    const percentages = [];
-    percentageArray.map((item) => {
-      percentages.push(item.percentage);
-    });
-
-    await splitCommissions(user, amount, percentages.length, percentages);
-
-    const updatedUser = await user.save();
-
-    if (updatedUser) {
-      // Get the count of verified users
-      const sponsorId = user.sponsor;
-
-      res.status(200).json({ sts: "01", msg: "User verified successfully" });
+    // Convert the amount type to number
+    const newAmount = parseFloat(amount);
+    // Get the package
+    const selectedPackage = await Package.findById(packageId);
+    if (!selectedPackage) {
+      res.status(400).json({ sts: "00", msg: "Please select a valid package" });
     } else {
-      res.status(400).json({ sts: "00", msg: "User not verified" });
+      // Find the user
+      const user = await User.findById(userId);
+
+      if (user) {
+        user.isAccountVerified = true;
+        user.packageSelected = packageId;
+
+        // Add the amount to global revenue database
+        if (!user.packageName.includes(selectedPackage.packageSlug)) {
+          const revenue = await Revenue.findOne({});
+          let newAmountToaddToMonth = 0;
+          let newAmountToaddToTotal = 0;
+          if (revenue) {
+            newAmountToaddToMonth = parseFloat(
+              revenue.monthlyRevenue + newAmount
+            );
+            newAmountToaddToTotal = parseFloat(
+              revenue.totalRevenue + newAmount
+            );
+          } else {
+            newAmountToaddToMonth = newAmount;
+            newAmountToaddToTotal = newAmount;
+          }
+
+          revenue.monthlyRevenue = newAmountToaddToMonth;
+          revenue.totalRevenue = newAmountToaddToMonth;
+
+          const updatedRevenue = await revenue.save();
+
+          if (updatedRevenue) {
+            // Split the revenue to the premium users
+
+            // Get the packages
+            const packages = await Package.find({}).populate("users");
+
+            if (packages) {
+              // Select each package. Each package will have memberProfit. Divide the monthly revenue to each users in that package
+              packages.forEach(async (eachPackage) => {
+                const memberProfit =
+                  updatedRevenue.monthlyRevenue *
+                  (eachPackage.memberProfit / 100);
+
+                // Divide the memberProfit by the count of users in that package
+                const memberProfitPerUser =
+                  memberProfit / eachPackage.users.length;
+
+                // Add the memberProfitPerUser to each user in that package
+                eachPackage.users.forEach(async (eachUser) => {
+                  const user = await User.findById(eachUser);
+                  user.unrealisedMonthlyProfit =
+                    user.unrealisedMonthlyProfit + memberProfitPerUser;
+                  const updatedUser = await user.save();
+                  if (!updatedUser) {
+                    res
+                      .status(400)
+                      .json({ sts: "00", msg: "Failed to update user" });
+                  } else {
+                    console.log("User updated successfully");
+                  }
+                });
+              });
+            }
+          } else {
+            res
+              .status(400)
+              .json({ sts: "00", msg: "Failed to update revenue" });
+          }
+
+          // Push the packageSlug into the array
+          user.packageName.push(selectedPackage.packageSlug);
+          if (!selectedPackage.users.includes(userId)) {
+            selectedPackage.users.push(userId);
+
+            // Show amount spend transaction in user's transactions
+            user.transactions.push({
+              amount,
+              kind: "spend",
+              fromWhom: "self",
+              status: "approved",
+            });
+
+            const level = await Level.findOne();
+
+            if (!level) {
+              res.status(400).json("Please create a level first");
+            } else {
+              const percentageArray = level.levelPercentages;
+
+              let percentages = [];
+              percentageArray.map((item) => {
+                percentages.push(item.percentage);
+              });
+
+              // Do split commission using loop
+              const userName = user.firstName + " " + user.lastName;
+              let currentUser = user.sponsor;
+              let totalCommission = 0;
+
+              while (currentUser && percentages.length > 0) {
+                if (!currentUser) {
+                  break;
+                }
+
+                const sponsor = await User.findById(currentUser);
+
+                if (!sponsor) {
+                  break;
+                }
+
+                const commission = (percentages[0] / 100) * amount;
+
+                totalCommission += commission;
+
+                if (!sponsor.walletAmount) {
+                  sponsor.walletAmount = commission;
+                } else {
+                  sponsor.walletAmount += commission;
+                }
+
+                console.log(sponsor.walletAmount);
+
+                sponsor.transactions.push({
+                  amount: commission,
+                  kind: "Level commission",
+                  fromWhom: userName,
+                  level: percentages.length,
+                  percentage: percentages[0],
+                  status: "approved",
+                });
+
+                if (!sponsor.overallAmount) {
+                  sponsor.overallAmount = commission;
+                } else {
+                  sponsor.overallAmount += commission;
+                }
+
+                const updateSponsor = await sponsor.save();
+
+                if (updateSponsor) {
+                  console.log(`sponsor: ${sponsor.sponsor}`);
+                  if (sponsor.sponsor === null) {
+                    break;
+                  } else {
+                    currentUser = sponsor.sponsor;
+                    percentages = percentages.slice(1);
+                  }
+                }
+              }
+
+              // Update the remaining amount to the payId: RBD004779237
+              const remainingAmount = amount - totalCommission;
+
+              console.log(remainingAmount);
+
+              const payId = "RBD004779237";
+              const uniqueId = "66000acbcfaa5d4ccb97b313";
+
+              const response = await axios.post(
+                "https://pwyfklahtrh.rubideum.net/basic/creditBalanceAuto",
+                { payId, uniqueId, amount: remainingAmount, currency: "RBD" }
+              );
+
+              if (response.data.success === 1) {
+                console.log("Successfully added to payId: RBD004779237");
+                const updatedUser = await user.save();
+                const updatedPackage = await selectedPackage.save();
+
+                if (updatedUser && updatedPackage) {
+                  res
+                    .status(200)
+                    .json({ sts: "01", msg: "User verified successfully" });
+                } else {
+                  res.status(400).json({ sts: "00", msg: "User not verified" });
+                }
+              } else {
+                console.log("Failed to add to payId: RBD004779237");
+                res
+                  .status(400)
+                  .json({ sts: "00", msg: "Failed to add to payId" });
+              }
+            }
+          } else {
+            res.status(400).json({
+              sts: "00",
+              msg: "You have already added this package to packages database",
+            });
+          }
+        } else {
+          res.status(400).json({
+            sts: "00",
+            msg: "You have already selected this package",
+          });
+        }
+      } else {
+        res.status(404).json({ sts: "00", msg: "User not found" });
+      }
     }
-  } else {
-    res.status(404).json({ sts: "00", msg: "User not found" });
   }
 });
 
@@ -791,61 +921,6 @@ export const changePassword = asyncHandler(async (req, res) => {
     }
   } else {
     res.status(404).json({ sts: "00", msg: "User not found" });
-  }
-});
-
-// Calculate Rubideum
-export const deductRubideum = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
-
-  const { amount } = req.body;
-
-  const user = await User.findById(userId);
-
-  if (
-    !user.payId ||
-    !user.uniqueId ||
-    user.payId === "" ||
-    user.uniqueId === ""
-  ) {
-    res.status(400);
-    throw new Error("Please send the payId and uniqueId");
-  }
-
-  // API to fetch the current market value of Rubideum
-  const currentValueResponse = await axios.get(
-    "https://pwyfklahtrh.rubideum.net/api/endPoint1/RBD_INR"
-  );
-
-  const currentValue = currentValueResponse.data.data.last_price;
-
-  // Rubideum to pass
-  const rubideumToPass = amount / currentValue;
-
-  // API to deduct balance
-  const response = await axios.post(
-    "https://pwyfklahtrh.rubideum.net/basic/deductBalanceAuto",
-    {
-      payId: user.payId,
-      uniqueId: user.uniqueId,
-      amount: rubideumToPass,
-      currency: "RBD",
-    }
-  );
-
-  const dataFetched = response.data;
-
-  if (dataFetched.success === 1) {
-    res.status(200).json({
-      sts: "01",
-      msg: "Rubideum deducted successfully",
-      rubideumToPass,
-    });
-  } else {
-    res.status(400).json({
-      sts: "00",
-      msg: "Deducting Rubideum failed. Check your Rubideum balance",
-    });
   }
 });
 
@@ -1116,6 +1191,45 @@ export const unfollow = asyncHandler(async (req, res) => {
   }
 });
 
+// Get user suggestions
+export const getSuggestions = asyncHandler(async (req, res) => {
+  // Get users in the order of new joining upto 20 results
+  const users = await User.find({})
+    .populate({ path: "profilePic", select: "filePath" })
+    .sort({ createdAt: -1 })
+    .limit(20)
+    .select("firstName lastName isAccountVerified profilePic");
+
+  if (users) {
+    res
+      .status(200)
+      .json({ sts: "01", msg: "Suggestions fetched successfully", users });
+  } else {
+    res.status(400).json({ sts: "00", msg: "No suggestions found" });
+  }
+});
+
+// Get the following
+export const getFollowing = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const user = await User.findById(userId)
+    .select("following")
+    .populate({
+      path: "following",
+      select: "firstName lastName profilePic",
+      populate: { path: "profilePic", select: "filePath" },
+    });
+
+  if (user) {
+    res
+      .status(200)
+      .json({ sts: "01", msg: "Following fetched successfully", following: user.following });
+  } else {
+    res.status(400).json({ sts: "00", msg: "No following found" });
+  }
+});
+
 // Get the level tree
 export const getLevelTree = asyncHandler(async (req, res) => {
   // Get user
@@ -1126,43 +1240,3 @@ export const getLevelTree = asyncHandler(async (req, res) => {
 
   console.log(user.referrals);
 });
-
-// Remove repeating values
-// export const updateNewPackage = asyncHandler(async (req, res) => {
-//   // Get prime package ID
-//   const packageId = await Package.findOne({
-//     packageSlug: "prime-subscription",
-//   });
-
-//   // Get all users with prime-subscription
-//   const users = await User.aggregate([
-//     {
-//       $match: {
-//         packageName: { $exists: true, $ne: [] },
-//       },
-//     },
-//     {
-//       $addFields: {
-//         lastPackageName: { $arrayElemAt: ["$packageName", -1] },
-//       },
-//     },
-//     {
-//       $match: {
-//         lastPackageName: "prime-subscription",
-//       },
-//     },
-//   ]);
-
-//   let updated;
-//   for (const user of users) {
-//     const userDocument = await User.findById(user._id);
-//     if (userDocument) {
-//       userDocument.packageSelected = packageId._id;
-//       updated = await userDocument.save();
-//     }
-//   }
-
-//   if (updated) {
-//     res.status(200).json({ sts: "01", msg: "Updated successfully" });
-//   }
-// });

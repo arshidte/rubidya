@@ -10,10 +10,12 @@ import {
   editUserProfile,
   follow,
   getDirectReferredUsers,
+  getFollowing,
   getLevelTree,
   getMedia,
   getProfilePicture,
   getStats,
+  getSuggestions,
   getUserProfile,
   loginUser,
   refferalTreeCount,
@@ -131,6 +133,12 @@ router.route("/unfollow").post(protect, unfollow);
 
 // Get the level tree
 router.route("/get-level-tree").get(protect, getLevelTree);
+
+// Get suggestions
+router.route("/get-suggestions").get(protect, getSuggestions);
+
+// Get following
+router.route("/get-following").get(protect, getFollowing);
 
 // Remove repeating values
 // router.route("/update-package").get(updateNewPackage);

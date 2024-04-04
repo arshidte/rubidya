@@ -73,6 +73,11 @@ const userSchema = new mongoose.Schema(
       double: true,
       default: 0,
     },
+    unrealisedMonthlyProfit: {
+      type: Number,
+      double: true,
+      default: 0,
+    },
     overallAmount: {
       type: Number,
       double: true,
