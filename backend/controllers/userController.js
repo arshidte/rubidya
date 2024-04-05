@@ -581,33 +581,46 @@ export const verifyUser = asyncHandler(async (req, res) => {
             // Split the revenue to the premium users
 
             // Get the packages
-            const packages = await Package.find({}).populate("users");
+            const packages = await Package.find({})
+              .populate("users")
+              .select("-benefits");
 
             if (packages) {
               // Select each package. Each package will have memberProfit. Divide the monthly revenue to each users in that package
               packages.forEach(async (eachPackage) => {
+                // Calculate the memberProfit
+                // monthly revenue * (member profit/100)
                 const memberProfit =
-                  updatedRevenue.monthlyRevenue *
-                  (eachPackage.memberProfit / 100);
+                  newAmount * (eachPackage.memberProfit / 100);
+
+                console.log("newAmount", newAmount);
+                console.log("memberProfit", memberProfit);
 
                 // Divide the memberProfit by the count of users in that package
-                const memberProfitPerUser =
-                  memberProfit / eachPackage.users.length;
+                const countOfUsers = eachPackage.users.length;
+                console.log("countOfUsers", countOfUsers);
+                if (countOfUsers > 0 && memberProfit > 0) {
+                  // Calculate the profit per user
+                  const memberProfitPerUser = memberProfit / countOfUsers;
+                  console.log("memberProfitPerUser", memberProfitPerUser);
+                  // Add the memberProfitPerUser to each user in that package
+                  eachPackage.users.forEach(async (eachUser) => {
+                    // Get the each user already exist in the package and add to unrealised monthly profit
+                    // const user = await User.findById(eachUser);
+                    eachUser.unrealisedMonthlyProfit =
+                      eachUser.unrealisedMonthlyProfit + memberProfitPerUser;
 
-                // Add the memberProfitPerUser to each user in that package
-                eachPackage.users.forEach(async (eachUser) => {
-                  const user = await User.findById(eachUser);
-                  user.unrealisedMonthlyProfit =
-                    user.unrealisedMonthlyProfit + memberProfitPerUser;
-                  const updatedUser = await user.save();
-                  if (!updatedUser) {
-                    res
-                      .status(400)
-                      .json({ sts: "00", msg: "Failed to update user" });
-                  } else {
-                    console.log("User updated successfully");
-                  }
-                });
+                    // Save to the user's database
+                    const updatedUser = await eachUser.save();
+                    if (!updatedUser) {
+                      res
+                        .status(400)
+                        .json({ sts: "00", msg: "Failed to update user" });
+                    } else {
+                      console.log("User updated successfully");
+                    }
+                  });
+                }
               });
             }
           } else {
@@ -618,17 +631,20 @@ export const verifyUser = asyncHandler(async (req, res) => {
 
           // Push the packageSlug into the array
           user.packageName.push(selectedPackage.packageSlug);
+
           if (!selectedPackage.users.includes(userId)) {
             selectedPackage.users.push(userId);
 
             // Show amount spend transaction in user's transactions
             user.transactions.push({
               amount,
-              kind: "spend",
+              typeofTransaction: "debit",
+              kind: `Package purchased`,
               fromWhom: "self",
               status: "approved",
             });
 
+            // Fetch the percentages level set from admin side
             const level = await Level.findOne();
 
             if (!level) {
@@ -646,6 +662,7 @@ export const verifyUser = asyncHandler(async (req, res) => {
               let currentUser = user.sponsor;
               let totalCommission = 0;
 
+              // Split the commission to users in the level tree based on the percentages
               while (currentUser && percentages.length > 0) {
                 if (!currentUser) {
                   break;
@@ -657,20 +674,23 @@ export const verifyUser = asyncHandler(async (req, res) => {
                   break;
                 }
 
+                // Get the first of the percentages
                 const commission = (percentages[0] / 100) * amount;
 
+                // Get the total commission inorder to move the balance to admin's payId
                 totalCommission += commission;
 
+                // Add the wallet amount to each user's wallet
                 if (!sponsor.walletAmount) {
                   sponsor.walletAmount = commission;
                 } else {
                   sponsor.walletAmount += commission;
                 }
 
-                console.log(sponsor.walletAmount);
-
+                // Push the credit transaction to each user
                 sponsor.transactions.push({
                   amount: commission,
+                  typeofTransaction: "credit",
                   kind: "Level commission",
                   fromWhom: userName,
                   level: percentages.length,
@@ -684,10 +704,10 @@ export const verifyUser = asyncHandler(async (req, res) => {
                   sponsor.overallAmount += commission;
                 }
 
+                // Save the user's database
                 const updateSponsor = await sponsor.save();
 
                 if (updateSponsor) {
-                  console.log(`sponsor: ${sponsor.sponsor}`);
                   if (sponsor.sponsor === null) {
                     break;
                   } else {
@@ -699,8 +719,6 @@ export const verifyUser = asyncHandler(async (req, res) => {
 
               // Update the remaining amount to the payId: RBD004779237
               const remainingAmount = amount - totalCommission;
-
-              console.log(remainingAmount);
 
               const payId = "RBD004779237";
               const uniqueId = "66000acbcfaa5d4ccb97b313";
@@ -1193,6 +1211,12 @@ export const unfollow = asyncHandler(async (req, res) => {
 
 // Get user suggestions
 export const getSuggestions = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  // Get the following
+  const user = await User.findById(userId).select("following");
+
+  const following = user.following;
+
   // Get users in the order of new joining upto 20 results
   const users = await User.find({})
     .populate({ path: "profilePic", select: "filePath" })
@@ -1201,9 +1225,20 @@ export const getSuggestions = asyncHandler(async (req, res) => {
     .select("firstName lastName isAccountVerified profilePic");
 
   if (users) {
+    const result = [];
+    users.forEach((user) => {
+      // Check if user is already following
+      if (following.includes(user._id)) {
+        user.isFollowing = true;
+      } else {
+        user.isFollowing = false;
+      }
+      result.push({ ...user._doc, isFollowing: user.isFollowing });
+    });
+
     res
       .status(200)
-      .json({ sts: "01", msg: "Suggestions fetched successfully", users });
+      .json({ sts: "01", msg: "Suggestions fetched successfully", result });
   } else {
     res.status(400).json({ sts: "00", msg: "No suggestions found" });
   }
@@ -1222,9 +1257,11 @@ export const getFollowing = asyncHandler(async (req, res) => {
     });
 
   if (user) {
-    res
-      .status(200)
-      .json({ sts: "01", msg: "Following fetched successfully", following: user.following });
+    res.status(200).json({
+      sts: "01",
+      msg: "Following fetched successfully",
+      following: user.following,
+    });
   } else {
     res.status(400).json({ sts: "00", msg: "No following found" });
   }

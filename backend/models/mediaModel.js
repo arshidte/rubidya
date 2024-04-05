@@ -9,18 +9,19 @@ const mediaSchema = new mongoose.Schema(
     },
     fileType: {
       type: String,
-      required: true,
     },
     fileName: {
       type: String,
-      required: true,
     },
     filePath: {
       type: String,
-      required: true,
     },
     description: {
       type: String,
+    },
+    sharedPost: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Media",
     },
     likedBy: [
       {

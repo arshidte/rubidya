@@ -91,6 +91,7 @@ const userSchema = new mongoose.Schema(
         level: String,
         percentage: Number,
         status: String,
+        typeofTransaction: String,
       },
     ],
     payId: {
