@@ -987,45 +987,82 @@ export const syncWallet = asyncHandler(async (req, res) => {
 
 // Get stats of number of users in each plan and the total amount to distribute
 export const getStats = asyncHandler(async (req, res) => {
-  // Get the member profit and users' count of each plan from package
-  const memberProfits = await Package.aggregate([
-    {
-      $project: {
-        memberProfit: "$memberProfit",
-        packageSlug: "$packageSlug",
-        packageName: "$packageName",
-        amount: "$amount",
-        usersCount: { $size: "$users" },
-      },
-    },
-    {
-      $match: {
-        memberProfit: { $gt: 0 },
-      },
-    },
-  ]).sort({ amount: 1 });
+  // Fetch the package, populate users and take the sum of unrealisedMonthlyProfit of users
+  const packages = await Package.find().populate("users");
+  console.log(packages);
 
-  // Get the monthly revenue from the revenue collection
-  const revenue = await Revenue.findOne({});
-  const monthlyRevenue = revenue.monthlyRevenue;
+  if (packages) {
+    const memberProfits = [];
 
-  if (memberProfits) {
-    memberProfits.forEach((profit) => {
-      profit.splitAmount = (
-        monthlyRevenue *
-        (profit.memberProfit / 100)
-      ).toFixed(2);
-    });
+    for (let eachPackage of packages) {
+      // Count of users
+      const countOfUsers = eachPackage.users.length;
 
-    res.status(200).json({
-      sts: "01",
-      msg: "Stats fetched successfully",
-      memberProfits,
-    });
+      const users = eachPackage.users;
+      let sum = 0;
+      let result = {};
+      for (let user of users) {
+        if (user.unrealisedMonthlyProfit > 0) {
+          sum += user.unrealisedMonthlyProfit;
+        }
+      }
+      result = {
+        packageSlug: eachPackage.packageSlug,
+        packageName: eachPackage.packageName,
+        memberProfit: eachPackage.memberProfit,
+        amount: eachPackage.amount,
+        usersCount: countOfUsers,
+        splitAmount: sum,
+      };
+      memberProfits.push(result);
+    }
+
+    res.status(200).json({ sts: "01", msg: "Success", memberProfits });
   } else {
-    res.status(404).json({ sts: "00", msg: "No stats found" });
+    res.status(400).json({ sts: "00", msg: "No data found" });
   }
 });
+
+// export const getStats = asyncHandler(async (req, res) => {
+//   // Get the member profit and users' count of each plan from package
+//   const memberProfits = await Package.aggregate([
+//     {
+//       $project: {
+//         memberProfit: "$memberProfit",
+//         packageSlug: "$packageSlug",
+//         packageName: "$packageName",
+//         amount: "$amount",
+//         usersCount: { $size: "$users" },
+//       },
+//     },
+//     {
+//       $match: {
+//         memberProfit: { $gt: 0 },
+//       },
+//     },
+//   ]).sort({ amount: 1 });
+
+//   // Get the monthly revenue from the revenue collection
+//   const revenue = await Revenue.findOne({});
+//   const monthlyRevenue = revenue.monthlyRevenue;
+
+//   if (memberProfits) {
+//     memberProfits.forEach((profit) => {
+//       profit.splitAmount = (
+//         monthlyRevenue *
+//         (profit.memberProfit / 100)
+//       ).toFixed(2);
+//     });
+
+//     res.status(200).json({
+//       sts: "01",
+//       msg: "Stats fetched successfully",
+//       memberProfits,
+//     });
+//   } else {
+//     res.status(404).json({ sts: "00", msg: "No stats found" });
+//   }
+// });
 
 // Convert INR to rubidya
 export const convertINR = asyncHandler(async (req, res) => {
