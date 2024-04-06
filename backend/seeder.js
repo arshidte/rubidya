@@ -3,6 +3,7 @@ import users from "./data/users.js";
 import revenue from "./data/revenue.js";
 import Revenue from "./models/revenueModel.js";
 import User from "./models/userModel.js";
+import Package from "./models/packageModel.js";
 
 await connectDB();
 
@@ -14,7 +15,7 @@ const importData = async () => {
     await Revenue.deleteMany();
     const createdRevenue = await Revenue.insertMany(revenue);
 
-    const updatePackage = await Package.updateMany({}, { $set: { users: [] } });
+    // const updatePackage = await Package.updateMany({}, { $set: { users: [] } });
 
     console.log("Data cleared");
     process.exit();

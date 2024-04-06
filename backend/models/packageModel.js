@@ -29,6 +29,11 @@ const packageSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    monthlyDivident: {
+      type: Number,
+      double: true,
+      default: 0,
+    }
   },
   {
     timestamps: true,

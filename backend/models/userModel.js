@@ -73,11 +73,6 @@ const userSchema = new mongoose.Schema(
       double: true,
       default: 0,
     },
-    unrealisedMonthlyProfit: {
-      type: Number,
-      double: true,
-      default: 0,
-    },
     overallAmount: {
       type: Number,
       double: true,
@@ -153,7 +148,7 @@ const userSchema = new mongoose.Schema(
     },
     gender: {
       type: String,
-      enum: ["Male", "Female", "Other", "Prefer not to say"],
+      // enum: ["Male", "Female", "Other", "Prefer not to say"],
     },
     dateOfBirth: {
       type: Date,
