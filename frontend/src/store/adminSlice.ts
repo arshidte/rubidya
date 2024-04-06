@@ -38,12 +38,13 @@ export const registerUserByReferralSlice = createSlice({
             })
             .addCase(registerUserByReferral.rejected, (state, action) => {
                 state.loading = false;
+                
                 console.error('Error', action.payload);
 
                 if (action.error.message === 'Request failed with status code 500') {
                     state.error = 'Please make sure you filled all the above details!';
                 } else if (action.error.message === 'Request failed with status code 400') {
-                    state.error = 'Email or Phone already used!';
+                    state.error = 'You are already registered!';
                 }
             });
     },

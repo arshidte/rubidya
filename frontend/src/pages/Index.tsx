@@ -78,7 +78,7 @@ const Index = () => {
                         <div className="ltr:mr-1 rtl:ml-1 text-md font-semibold">Monthly Revenue</div>
                     </div>
                     <div className="flex items-center mt-5">
-                        <div className="text-3xl font-bold ltr:mr-3 rtl:ml-3"> {getRevenueData && getRevenueData.totalRevenue} </div>
+                        <div className="text-3xl font-bold ltr:mr-3 rtl:ml-3"> {getRevenueData && getRevenueData.monthlyRevenue} </div>
                     </div>
                 </div>
             </div>

@@ -8,6 +8,7 @@ import {
   getRevenueToAdmin,
   getUsersCount,
   handleActivation,
+  searchAllusers,
   // shareSplitting,
   splitProfit,
 } from "../controllers/adminController.js";
@@ -17,6 +18,9 @@ const router = express.Router();
 
 // Get all users to admin
 router.route("/get-all-users").get(protect, getAllusers);
+
+// Search in all users
+router.route("/search-users").get(protect, searchAllusers);
 
 // Add 10 level percentages
 router.route("/add-level-percentages").post(protect, addLevelPercentages);

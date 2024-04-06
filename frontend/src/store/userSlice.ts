@@ -7,7 +7,6 @@ export const getAllUsersToAdmin = createAsyncThunk('getAllUsers', async (data: a
     const token: any = localStorage.getItem('userInfo');
     const parsedData = JSON.parse(token);
     const { pageSize, page } = data;
-    console.log(pageSize, page);
 
     const config = {
         headers: {
@@ -46,6 +45,53 @@ export const getAllUsersSlice = createSlice({
                     state.error = 'Please make sure you filled all the above details!';
                 } else if (action.error.message === 'Request failed with status code 400') {
                     state.error = 'Email or Phone already used!';
+                }
+            });
+    },
+});
+
+// Search all users to admin
+export const searchAllUsers = createAsyncThunk('searchAllUsers', async (search: any) => {
+    const token: any = localStorage.getItem('userInfo');
+    const parsedData = JSON.parse(token);
+
+    const config = {
+        headers: {
+            Authorization: `Bearer ${parsedData.access_token}`,
+            'content-type': 'application/json',
+        },
+    };
+
+    const response = await axios.get(`${URL}/api/admin/search-users?search=${search}`, config);
+
+    return response.data;
+});
+
+export const searchAllUsersSlice = createSlice({
+    name: 'searchAllUsersSlice',
+    initialState: {
+        loading: false,
+        data: null,
+        error: '',
+    },
+    reducers: {},
+    extraReducers: (builder) => {
+        builder
+            .addCase(searchAllUsers.pending, (state: any) => {
+                state.loading = true;
+            })
+            .addCase(searchAllUsers.fulfilled, (state, action) => {
+                state.loading = false;
+                state.data = action.payload;
+            })
+            .addCase(searchAllUsers.rejected, (state, action) => {
+                state.loading = false;
+                console.error('Error', action.payload);
+
+                if (action.error.message === 'Request failed with status code 500') {
+                    state.error = 'Fetching users failed!';
+                } else if (action.error.message === 'Request failed with status code 400') {
+                    state.error = 'Fetching users failed';
                 }
             });
     },
@@ -245,6 +291,7 @@ export const editUserByAdminSlice = createSlice({
     },
 });
 
+export const searchAllUsersReducer = searchAllUsersSlice.reducer;
 export const getRevenueReducer = getRevenueSlice.reducer;
 export const editUserByAdminReducer = editUserByAdminSlice.reducer;
 export const activationHandleReducer = activationHandleSlice.reducer;

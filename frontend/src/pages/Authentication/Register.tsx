@@ -519,8 +519,16 @@ const Register = () => {
                                             )}
                                         </button>
                                     </form>
-                                    <div className="flex items-center justify-center mt-5 text-center">
-                                        {userError && `Some error occured. Please ensure that the email address or phone number has not been used already!`}
+                                    <div className="mt-5 text-center">
+                                        {userError == 'You are already registered!' && (
+                                            <>
+                                                You are already registered!&nbsp;<br />
+                                                <a className='underline hover:text-primary' href="https://play.google.com/store/apps/details?id=com.rubidya&pcampaignid=web_share" target="_blank">
+                                                    Click here
+                                                </a>{' '}
+                                                &nbsp;to download the app and login
+                                            </>
+                                        )}
                                     </div>
                                 </>
                             ) : (

@@ -5,17 +5,54 @@ import Revenue from "../models/revenueModel.js";
 import User from "../models/userModel.js";
 import jwt from "jsonwebtoken";
 
-// Get all users to admin
-// export const getAllusers = asyncHandler(async (req, res) => {
+// Search in all users
+export const searchAllusers = asyncHandler(async (req, res) => {
+  const { search } = req.query;
 
-//   const users = await User.find().populate("packageSelected");
+  let query = {
+    $or: [
+      {
+        firstName: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+      {
+        lastName: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+      {
+        email: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+      {
+        payId: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+    ],
+  };
 
-//   if (users) {
-//     res.status(200).json(users);
-//   } else {
-//     res.status(404).json({ message: "No users found" });
-//   }
-// });
+  // Handle phone number search separately if it's provided and valid
+  if (!isNaN(search)) {
+    query.$or.push({
+      phone: search,
+    });
+  }
+
+  const users = await User.find(query);
+
+  if (users) {
+    res.status(200).json({ sts: "01", msg: "Fetched successfully", users });
+  } else {
+    res.status(404).json({ message: "No users found" });
+  }
+});
 
 // With pagination
 export const getAllusers = asyncHandler(async (req, res) => {
@@ -160,103 +197,70 @@ export const getRevenueToAdmin = asyncHandler(async (req, res) => {
 
 // Split profit to users in prime and gold membership
 export const splitProfit = asyncHandler(async (req, res) => {
-  // Get the total amount reached to company (Amount got from packages (500/5000/25000))
-  const totalAmount = await Revenue.findOne({}).select("monthlyRevenue");
+  // Get the total amount reached to company
+  const revenue = await Revenue.findOne({}).select("monthlyRevenue");
 
-  // Get the prime users' member profit percentage
-  const primeMemberProfit = await Package.findOne({
-    packageSlug: "prime-membership",
-  }).select("memberProfit");
+  const monthlyRevenue = revenue.monthlyRevenue;
 
-  // Give commission to prime users
-  const primeUsers = await User.find({ packageName: "prime-membership" });
+  if (monthlyRevenue > 0) {
+    const packages = await Package.find().populate("users");
 
-  if (totalAmount.monthlyRevenue) {
-    if (primeUsers.length > 0) {
-      // Total profit to share to prime users
-      const primeProfit = parseFloat(
-        (
-          totalAmount.monthlyRevenue *
-          (primeMemberProfit.memberProfit / 100)
-        ).toFixed(2)
-      );
+    if (packages) {
+      // Fetch each package, calculate the profit percentage and split profit to users
+      for (let eachPackage of packages) {
+        const { memberProfit } = eachPackage;
 
-      if (primeProfit > 0) {
-        // Profit per person
-        const profitPerPerson = parseFloat(primeProfit / primeUsers.length);
+        console.log(`packageName: ${eachPackage.packageName}`);
 
-        if (profitPerPerson > 0) {
-          primeUsers.forEach(async (user) => {
-            user.walletAmount += profitPerPerson;
-            user.totalMemberProfit += profitPerPerson;
-            user.transactions.push({
-              type: "monthly-profit",
-              amount: profitPerPerson,
-              description: "Monthly profit for prime membership",
-            });
-            await user.save();
-          });
+        // Calculate profit percentage of each package
+        const profitPercentageAmount = (memberProfit / 100) * monthlyRevenue;
+
+        // Calcutate the profit per person
+        const usersLength = eachPackage.users.length;
+
+        console.log(`usersLength: ${usersLength}`);
+
+        if (usersLength > 0 && profitPercentageAmount > 0) {
+          const profitPerPerson = profitPercentageAmount / usersLength;
+          // Get all the users who have this package
+          const users = eachPackage.users;
+
+          // Split profit to users
+          for (let eachUser of users) {
+            eachUser.unrealisedMonthlyProfit =
+              eachUser.unrealisedMonthlyProfit + profitPerPerson;
+
+            // Save to the user's database
+            const updatedUser = await eachUser.save();
+            if (!updatedUser) {
+              console.log(`User ${eachUser.firstName} not updated`);
+            } else {
+              console.log("User updated successfully");
+            }
+          }
+        } else {
+          console.log(`No users found in ${eachPackage.packageName}`);
         }
       }
-    }
 
-    // Get the gold users' member profit percentage
-    const goldMemberProfit = await Package.findOne({
-      packageSlug: "gold-membership",
-    }).select("memberProfit");
+      // Clear the monthly revenue
+      revenue.monthlyRevenue = 0;
+      const updatedRevenue = await revenue.save();
 
-    // Give commission to gold users
-    const goldUsers = await User.find({ packageName: "gold-membership" });
-
-    if (goldUsers.length > 0) {
-      // Total profit to share to gold users
-      const goldProfit = parseFloat(
-        (
-          totalAmount.monthlyRevenue *
-          (goldMemberProfit.memberProfit / 100)
-        ).toFixed(2)
-      );
-
-      if (goldProfit > 0) {
-        // Profit per person
-        const profitPerPerson = parseFloat(goldProfit / goldUsers.length);
-
-        if (profitPerPerson > 0) {
-          goldUsers.forEach(async (user) => {
-            user.walletAmount += profitPerPerson;
-            user.totalMemberProfit += profitPerPerson;
-            user.transactions.push({
-              type: "monthly-profit",
-              amount: profitPerPerson,
-              description: "Monthly profit for gold membership",
-            });
-            await user.save();
-          });
-        }
-      }
-    }
-
-    if (primeUsers.length > 0 || goldUsers.length > 0) {
-      totalAmount.monthlyRevenue = 0;
-      const updateMonthlyRevenue = await totalAmount.save();
-      if (updateMonthlyRevenue) {
+      if (updatedRevenue) {
         res.status(201).json({
-          message: "Profit splitted successfully",
+          message: "Profit splitted and monthly revenue cleared successfully",
         });
       } else {
         res.status(400).json({
-          message: "Error updating monthly revenue",
+          message: "Monthly revenue not updated",
         });
       }
     } else {
-      res.status(400).json({
-        message: "Profit not splitted",
-      });
+      res.status(400).json({ sts: "00", msg: "No packages found" });
     }
   } else {
-    res.status(400).json({
-      message: "No monthly revenue found",
-    });
+    res.status(400).json({ sts: "00", msg: "Monthly revenue is zero" });
   }
 });
 

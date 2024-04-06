@@ -6,8 +6,9 @@ import { setPageTitle } from '../../store/themeConfigSlice';
 // import IconFile from '../../components/Icon/IconFile';
 // import IconPrinter from '../../components/Icon/IconPrinter';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { activationHandle, editUserDetails, getAllUsersToAdmin } from '../../store/userSlice';
+import { activationHandle, editUserDetails, getAllUsersToAdmin, searchAllUsers } from '../../store/userSlice';
 import { Dialog, Transition, Tab } from '@headlessui/react';
+import Select from 'react-select';
 
 import Swal from 'sweetalert2';
 
@@ -24,6 +25,11 @@ interface RowDataItem {
     createdAt: string;
     phone: string;
     walletAmount: number;
+}
+
+interface PAGE_SIZE {
+    value: number;
+    label: number;
 }
 
 const AllMembers = () => {
@@ -45,6 +51,9 @@ const AllMembers = () => {
     const { loading: activationLoading, data: activationData, error: activationError } = useAppSelector((state: any) => state.activationHandle);
     const { loading: editUserByAdminLoading, data: editUserByAdminData, error: editUserByAdminError } = useAppSelector((state: any) => state.editUserByAdmin);
 
+    // Get search results
+    const { loading: searchUserLoading, data: searchUserData, error: searchUserError } = useAppSelector((state: any) => state.searchAllUsers);
+
     const [modal21, setModal21] = useState(false);
 
     useEffect(() => {
@@ -52,8 +61,16 @@ const AllMembers = () => {
     });
 
     const [page, setPage] = useState(1);
-    const PAGE_SIZES = [10, 20, 30, 50, 100];
-    const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
+
+    const PAGE_SIZES = [
+        { value: 10, label: 10 },
+        { value: 20, label: 20 },
+        { value: 30, label: 30 },
+        { value: 50, label: 50 },
+        { value: 100, label: 100 },
+    ];
+
+    const [pageSize, setPageSize] = useState(PAGE_SIZES[0].value);
     const [initialRecords, setInitialRecords] = useState(sortBy(rowData, 'id'));
     const [recordsData, setRecordsData] = useState(initialRecords);
 
@@ -85,16 +102,18 @@ const AllMembers = () => {
     }, [page, pageSize, initialRecords, rowData]);
 
     useEffect(() => {
-        setInitialRecords(() => {
-            return (
-                rowData &&
-                rowData.filter((item: any) => {
-                    return item.firstName.toLowerCase().includes(search.toLowerCase()) || item.email.toLowerCase().includes(search.toLowerCase());
-                })
-            );
-        });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [search]);
+        if (search !== '') {
+            dispatch(searchAllUsers(search));
+            if (searchUserData) {
+                setInitialRecords(searchUserData.users);
+                // eslint-disable-next-line react-hooks/exhaustive-deps
+            }
+        } else {
+            const data = { pageSize, page };
+            dispatch(getAllUsersToAdmin(data));
+        }
+        // });
+    }, [search, initialRecords]);
 
     useEffect(() => {
         const data = sortBy(initialRecords, sortStatus.columnAccessor);
@@ -449,32 +468,38 @@ const AllMembers = () => {
                         // paginationText={({ from, to, totalRecords }) => `Showing  ${from} to ${to} of ${totalRecords} entries`}
                     />
                 </div>
-                <div className="flex justify-end items-center gap-6">
-                    <button
-                        className="bg-slate-600 p-2 rounded-3xl text-white"
-                        onClick={() => {
-                            setPage(page - 1);
-                            const data = { pageSize, page };
-                            dispatch(getAllUsersToAdmin(data));
-                        }}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">
-                            <path d="M15.293 3.293 6.586 12l8.707 8.707 1.414-1.414L9.414 12l7.293-7.293-1.414-1.414z" />
-                        </svg>
-                    </button>
-                    <>{page}</>
-                    <button
-                        className="bg-primary p-2 rounded-3xl text-white"
-                        onClick={() => {
-                            setPage(page + 1);
-                            const data = { pageSize, page };
-                            dispatch(getAllUsersToAdmin(data));
-                        }}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">
-                            <path d="M7.293 4.707 14.586 12l-7.293 7.293 1.414 1.414L17.414 12 8.707 3.293 7.293 4.707z" />
-                        </svg>
-                    </button>
+                <div className="flex justify-between items-center gap-3 mt-4">
+                    <div className="flex items-center gap-3">
+                        <>Page Size:</>
+                        <Select defaultValue={PAGE_SIZES[0]} options={PAGE_SIZES} isSearchable={false} onChange={(e: any) => setPageSize(e.value)} />
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <button
+                            className="bg-primary p-2 rounded-3xl text-white"
+                            onClick={() => {
+                                setPage(page - 1);
+                                const data = { pageSize, page };
+                                dispatch(getAllUsersToAdmin(data));
+                            }}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+                                <path d="M15.293 3.293 6.586 12l8.707 8.707 1.414-1.414L9.414 12l7.293-7.293-1.414-1.414z" fill="white" />
+                            </svg>
+                        </button>
+                        <>{page}</>
+                        <button
+                            className="bg-primary p-2 rounded-3xl text-white"
+                            onClick={() => {
+                                setPage(page + 1);
+                                const data = { pageSize, page };
+                                dispatch(getAllUsersToAdmin(data));
+                            }}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+                                <path d="M7.293 4.707 14.586 12l-7.293 7.293 1.414 1.414L17.414 12 8.707 3.293 7.293 4.707z" fill="white" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 <Transition appear show={modal21} as={Fragment}>
                     <Dialog
