@@ -614,6 +614,8 @@ export const verifyUser = asyncHandler(async (req, res) => {
                     eachPackage.monthlyDivident + memberProfit
                   ).toFixed(4);
 
+                  eachPackage.usersCount = eachPackage.users.length;
+
                   const updatePackage = await eachPackage.save();
                   if (updatePackage) {
                     console.log("updatePackage", updatePackage.packageName);

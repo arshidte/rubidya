@@ -250,7 +250,7 @@ const ManagePackages = () => {
                             { accessor: 'packageName', title: 'Package Name' },
                             { accessor: 'amount', title: 'Package Amount' },
                             { accessor: 'memberProfit', title: 'Member Profit' },
-                            { accessor: 'Actions 02', title: 'Count of Users', render: (packages: any) => <>{packages.users.length}</> },
+                            { accessor: 'Actions 02', title: 'Count of Users', render: (eachPackage: any) => <>{eachPackage.users.length}</> },
                             {
                                 accessor: 'Actions',
                                 title: 'Edit Package',

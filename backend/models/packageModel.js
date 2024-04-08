@@ -33,7 +33,11 @@ const packageSchema = new mongoose.Schema(
       type: Number,
       double: true,
       default: 0,
-    }
+    },
+    usersCount: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

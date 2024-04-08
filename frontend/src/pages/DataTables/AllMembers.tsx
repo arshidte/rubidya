@@ -101,19 +101,18 @@ const AllMembers = () => {
         setRecordsData([...initialRecords]);
     }, [page, pageSize, initialRecords, rowData]);
 
-    useEffect(() => {
-        if (search !== '') {
-            dispatch(searchAllUsers(search));
-            if (searchUserData) {
-                setInitialRecords(searchUserData.users);
-                // eslint-disable-next-line react-hooks/exhaustive-deps
-            }
-        } else {
-            const data = { pageSize, page };
-            dispatch(getAllUsersToAdmin(data));
-        }
-        // });
-    }, [search, initialRecords]);
+    // useEffect(() => {
+    //     if (search !== '') {
+    //         dispatch(searchAllUsers(search));
+    //         if (searchUserData) {
+    //             setInitialRecords(searchUserData.users);
+    //             // eslint-disable-next-line react-hooks/exhaustive-deps
+    //         }
+    //     } else {
+    //         const data = { pageSize, page };
+    //         dispatch(getAllUsersToAdmin(data));
+    //     }
+    // }, [search, initialRecords]);
 
     useEffect(() => {
         const data = sortBy(initialRecords, sortStatus.columnAccessor);
@@ -367,106 +366,112 @@ const AllMembers = () => {
                     <input type="text" className="form-input w-auto" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
                 </div>
                 <div className="datatables">
-                    <DataTable
-                        highlightOnHover
-                        className="whitespace-nowrap table-hover"
-                        records={recordsData}
-                        columns={[
-                            {
-                                accessor: 'Action 01',
-                                title: 'Sl No.',
-                                sortable: false,
-                                render: (user: any, idx: number) => <>{idx + 1}</>,
-                            },
-                            {
-                                accessor: 'createdAt',
-                                title: 'Joining Date',
-                                sortable: true,
-                                render: ({ createdAt }) => <div>{formatDate(createdAt)}</div>,
-                            },
-                            { accessor: '_id', hidden: true },
-                            { accessor: 'firstName', sortable: true },
-                            { accessor: 'lastName', sortable: true },
-                            { accessor: 'email', sortable: true },
-                            { accessor: 'countryCode', sortable: true },
-                            { accessor: 'phone', sortable: true },
-                            { accessor: 'payId', title: 'Pay ID', sortable: true },
-                            {
-                                accessor: 'isVerified',
-                                sortable: true,
-                                render: ({ isAccountVerified }) => (
-                                    <div>
-                                        {isAccountVerified ? (
-                                            <div className="bg-green-500 text-white p-1 font-bold rounded w-min text-xs">Verified</div>
-                                        ) : (
-                                            <div className="bg-red-500 text-white p-1 font-bold rounded w-min text-xs">Not Verified</div>
-                                        )}
-                                    </div>
-                                ),
-                            },
-                            { accessor: 'Selected Package', sortable: true, render: ({ packageSelected }) => <div>{packageSelected && packageSelected.packageName}</div> },
-                            {
-                                accessor: 'Action 02',
-                                title: 'Edit User',
-                                render: (user: any) => (
-                                    <div className="flex space-x-2 flex-col">
-                                        <button type="button" onClick={() => handleEdit(user)} className="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 text-white p-2 rounded-lg">
-                                            Edit
-                                        </button>
-                                    </div>
-                                ),
-                            },
-                            {
-                                accessor: 'Action 03',
-                                title: 'Activation',
-                                render: (user: any) => (
-                                    <div className="flex space-x-2 flex-col">
-                                        <button
-                                            type="button"
-                                            onClick={() => handleActivation(user)}
-                                            className={
-                                                !user.acStatus
-                                                    ? `bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 text-white p-2 rounded-lg`
-                                                    : `bg-gradient-to-r from-red-400 via-red-500 to-red-600 text-white p-2 rounded-lg`
-                                            }
-                                        >
-                                            {user.acStatus ? `Deactivate` : `Activate`}
-                                        </button>
-                                    </div>
-                                ),
-                            },
-                            {
-                                accessor: 'Action 04',
-                                title: 'Wallet Amount',
-                                render: (user: any) => (
-                                    <div className="flex space-x-2 flex-col">
-                                        <button
-                                            type="button"
-                                            onClick={() => fetchWalletAmount({ payId: user.payId, uniqueId: user.uniqueId, currency: 'RBD' })}
-                                            className="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 text-white p-2 rounded-lg"
-                                        >
-                                            Wallet
-                                        </button>
-                                    </div>
-                                ),
-                            },
-                        ]}
-                        // totalRecords={initialRecords.length}
-                        // recordsPerPage={pageSize}
-                        // page={page}
-                        // onPageChange={(p) => {
-                        //     console.log(p);
-                        //     setPage(p);
-                        //     const data = { pageSize, page };
-                        //     dispatch(getAllUsersToAdmin(data));
-                        // }}
-                        // recordsPerPageOptions={PAGE_SIZES}
-                        // onRecordsPerPageChange={setPageSize}
-                        // sortStatus={sortStatus}
-                        // onSortStatusChange={setSortStatus}
-                        minHeight={200}
-                        // paginationText={({ from, to, totalRecords }) => `Showing  ${from} to ${to} of ${totalRecords} entries`}
-                    />
+                    {loading ? (
+                        <div className="flex justify-center items-center h-screen">
+                            <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-gray-900"></div>
+                        </div>
+                    ) : (
+                        <DataTable
+                            highlightOnHover
+                            className="whitespace-nowrap table-hover"
+                            records={recordsData}
+                            columns={[
+                                {
+                                    accessor: 'Action 01',
+                                    title: 'Sl No.',
+                                    sortable: false,
+                                    render: (user: any, idx: number) => <>{idx + 1}</>,
+                                },
+                                {
+                                    accessor: 'createdAt',
+                                    title: 'Joining Date',
+                                    sortable: true,
+                                    render: ({ createdAt }) => <div>{formatDate(createdAt)}</div>,
+                                },
+                                { accessor: '_id', hidden: true },
+                                { accessor: 'firstName', sortable: true },
+                                { accessor: 'lastName', sortable: true },
+                                { accessor: 'email', sortable: true },
+                                { accessor: 'countryCode', sortable: true },
+                                { accessor: 'phone', sortable: true },
+                                { accessor: 'payId', title: 'Pay ID', sortable: true },
+                                {
+                                    accessor: 'isVerified',
+                                    sortable: true,
+                                    render: ({ isAccountVerified }) => (
+                                        <div>
+                                            {isAccountVerified ? (
+                                                <div className="bg-green-500 text-white p-1 font-bold rounded w-min text-xs">Verified</div>
+                                            ) : (
+                                                <div className="bg-red-500 text-white p-1 font-bold rounded w-min text-xs">Not Verified</div>
+                                            )}
+                                        </div>
+                                    ),
+                                },
+                                { accessor: 'Selected Package', sortable: true, render: ({ packageSelected }) => <div>{packageSelected && packageSelected.packageName}</div> },
+                                {
+                                    accessor: 'Action 02',
+                                    title: 'Edit User',
+                                    render: (user: any) => (
+                                        <div className="flex space-x-2 flex-col">
+                                            <button type="button" onClick={() => handleEdit(user)} className="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 text-white p-2 rounded-lg">
+                                                Edit
+                                            </button>
+                                        </div>
+                                    ),
+                                },
+                                {
+                                    accessor: 'Action 03',
+                                    title: 'Activation',
+                                    render: (user: any) => (
+                                        <div className="flex space-x-2 flex-col">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleActivation(user)}
+                                                className={
+                                                    !user.acStatus
+                                                        ? `bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 text-white p-2 rounded-lg`
+                                                        : `bg-gradient-to-r from-red-400 via-red-500 to-red-600 text-white p-2 rounded-lg`
+                                                }
+                                            >
+                                                {user.acStatus ? `Deactivate` : `Activate`}
+                                            </button>
+                                        </div>
+                                    ),
+                                },
+                                {
+                                    accessor: 'Action 04',
+                                    title: 'Wallet Amount',
+                                    render: (user: any) => (
+                                        <div className="flex space-x-2 flex-col">
+                                            <button
+                                                type="button"
+                                                onClick={() => fetchWalletAmount({ payId: user.payId, uniqueId: user.uniqueId, currency: 'RBD' })}
+                                                className="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 text-white p-2 rounded-lg"
+                                            >
+                                                Wallet
+                                            </button>
+                                        </div>
+                                    ),
+                                },
+                            ]}
+                            // totalRecords={initialRecords.length}
+                            // recordsPerPage={pageSize}
+                            // page={page}
+                            // onPageChange={(p) => {
+                            //     console.log(p);
+                            //     setPage(p);
+                            //     const data = { pageSize, page };
+                            //     dispatch(getAllUsersToAdmin(data));
+                            // }}
+                            // recordsPerPageOptions={PAGE_SIZES}
+                            // onRecordsPerPageChange={setPageSize}
+                            // sortStatus={sortStatus}
+                            // onSortStatusChange={setSortStatus}
+                            minHeight={200}
+                            // paginationText={({ from, to, totalRecords }) => `Showing  ${from} to ${to} of ${totalRecords} entries`}
+                        />
+                    )}
                 </div>
                 <div className="flex justify-between items-center gap-3 mt-4">
                     <div className="flex items-center gap-3">
