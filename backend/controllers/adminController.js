@@ -58,6 +58,8 @@ export const searchAllusers = asyncHandler(async (req, res) => {
 export const getAllusers = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
+  
+  console.log(page, limit);
 
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
@@ -65,11 +67,14 @@ export const getAllusers = asyncHandler(async (req, res) => {
   const userCount = await User.countDocuments({});
 
   const users = await User.find()
-    .select("-password")
+    .select(
+      "-password -transactions -profilePic -isVerified -isAdmin -totalReferralAmount -totalMemberProfit -overallAmount -likedPosts"
+    )
     .skip(startIndex)
     .limit(limit);
 
-  if (users) {
+  if (users.length > 0) {
+
     const pagination = {};
 
     if (endIndex < userCount) {
@@ -86,7 +91,11 @@ export const getAllusers = asyncHandler(async (req, res) => {
       };
     }
 
-    res.status(200).json(users);
+
+    res
+      .status(200)
+      .json({ users, pagination, sts: "01", msg: "Fetched successfully" });
+
   } else {
     res.status(404).json({ message: "No users found" });
   }

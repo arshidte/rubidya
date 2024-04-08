@@ -538,7 +538,7 @@ const AllMembers = () => {
                                 >
                                     <Dialog.Panel className="panel border-0 py-1 px-4 rounded-lg overflow-hidden w-full max-w-sm my-8 text-black dark:text-white-dark">
                                         <div className="flex items-center justify-between p-5 font-semibold text-lg dark:text-white">
-                                            <h5>Register</h5>
+                                            <h5>Edit</h5>
                                         </div>
                                         <div className="p-5">
                                             <form>
