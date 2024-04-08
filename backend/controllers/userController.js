@@ -555,85 +555,76 @@ export const verifyUser = asyncHandler(async (req, res) => {
         user.isAccountVerified = true;
         user.packageSelected = packageId;
 
-        // Add the amount to global revenue database
+        // Check if the user has selected the package before.
         if (!user.packageName.includes(selectedPackage.packageSlug)) {
-          const revenue = await Revenue.findOne({});
-          let newAmountToaddToMonth = 0;
-          let newAmountToaddToTotal = 0;
-          if (revenue) {
-            newAmountToaddToMonth = parseFloat(
-              revenue.monthlyRevenue + newAmount
-            );
-            newAmountToaddToTotal = parseFloat(
-              revenue.totalRevenue + newAmount
-            );
-          } else {
-            newAmountToaddToMonth = newAmount;
-            newAmountToaddToTotal = newAmount;
-          }
-
-          revenue.monthlyRevenue = newAmountToaddToMonth;
-          revenue.totalRevenue = newAmountToaddToMonth;
-
-          const updatedRevenue = await revenue.save();
-
-          if (updatedRevenue) {
-            // Split the revenue to the premium users
-
-            // Get the packages
-            const packages = await Package.find({})
-              .populate("users")
-              .select("-benefits");
-
-            if (packages) {
-              // Select each package. Each package will have memberProfit. Divide the monthly revenue to each users in that package
-              packages.forEach(async (eachPackage) => {
-                // Calculate the memberProfit
-                // monthly revenue * (member profit/100)
-                const memberProfit =
-                  newAmount * (eachPackage.memberProfit / 100);
-
-                console.log("newAmount", newAmount);
-                console.log("memberProfit", memberProfit);
-
-                // Divide the memberProfit by the count of users in that package
-                const countOfUsers = eachPackage.users.length;
-                console.log("countOfUsers", countOfUsers);
-                if (countOfUsers > 0 && memberProfit > 0) {
-                  // Calculate the profit per user
-                  const memberProfitPerUser = memberProfit / countOfUsers;
-                  console.log("memberProfitPerUser", memberProfitPerUser);
-                  // Add the memberProfitPerUser to each user in that package
-                  eachPackage.users.forEach(async (eachUser) => {
-                    // Get the each user already exist in the package and add to unrealised monthly profit
-                    // const user = await User.findById(eachUser);
-                    eachUser.unrealisedMonthlyProfit =
-                      eachUser.unrealisedMonthlyProfit + memberProfitPerUser;
-
-                    // Save to the user's database
-                    const updatedUser = await eachUser.save();
-                    if (!updatedUser) {
-                      res
-                        .status(400)
-                        .json({ sts: "00", msg: "Failed to update user" });
-                    } else {
-                      console.log("User updated successfully");
-                    }
-                  });
-                }
-              });
-            }
-          } else {
-            res
-              .status(400)
-              .json({ sts: "00", msg: "Failed to update revenue" });
-          }
-
-          // Push the packageSlug into the array
-          user.packageName.push(selectedPackage.packageSlug);
-
+          // Check if the userId is already present in
           if (!selectedPackage.users.includes(userId)) {
+            // Add the user to selected package
             selectedPackage.users.push(userId);
+
+            // Push the packageSlug into the array
+            user.packageName.push(selectedPackage.packageSlug);
+
+            const updatedPackage = await selectedPackage.save();
+
+            // Add the amount to global revenue database
+            const revenue = await Revenue.findOne({});
+            let newAmountToaddToMonth = 0;
+            let newAmountToaddToTotal = 0;
+            if (revenue) {
+              newAmountToaddToMonth = parseFloat(
+                revenue.monthlyRevenue + newAmount
+              ).toFixed(2);
+              newAmountToaddToTotal = parseFloat(
+                revenue.totalRevenue + newAmount
+              ).toFixed(2);
+            } else {
+              newAmountToaddToMonth = newAmount;
+              newAmountToaddToTotal = newAmount;
+            }
+
+            revenue.monthlyRevenue = newAmountToaddToMonth;
+            revenue.totalRevenue = newAmountToaddToMonth;
+
+            const updatedRevenue = await revenue.save();
+
+            if (updatedRevenue) {
+              // Split the revenue to the premium users
+
+              // Get the packages
+              const packages = await Package.find({})
+                .populate("users")
+                .select("-benefits");
+
+              if (packages) {
+                // Select each package. Each package will have memberProfit. Divide the monthly revenue to each users in that package
+                packages.forEach(async (eachPackage) => {
+                  // Calculate the memberProfit
+                  // monthly revenue * (member profit/100)
+                  const memberProfit = parseFloat(
+                    newAmount * (eachPackage.memberProfit / 100)
+                  );
+
+                  console.log("newAmount", newAmount);
+                  console.log("memberProfit", memberProfit);
+                  console.log("package", eachPackage.packageName);
+
+                  // Save this value to monthlyDivident in the package
+                  eachPackage.monthlyDivident = parseFloat(
+                    eachPackage.monthlyDivident + memberProfit
+                  ).toFixed(4);
+
+                  const updatePackage = await eachPackage.save();
+                  if (updatePackage) {
+                    console.log("updatePackage", updatePackage.packageName);
+                  }
+                });
+              }
+            } else {
+              res
+                .status(400)
+                .json({ sts: "00", msg: "Failed to update revenue" });
+            }
 
             // Show amount spend transaction in user's transactions
             user.transactions.push({
@@ -718,34 +709,33 @@ export const verifyUser = asyncHandler(async (req, res) => {
               }
 
               // Update the remaining amount to the payId: RBD004779237
-              const remainingAmount = amount - totalCommission;
+              // const remainingAmount = amount - totalCommission;
 
-              const payId = "RBD004779237";
-              const uniqueId = "66000acbcfaa5d4ccb97b313";
+              // const payId = "RBD004779237";
+              // const uniqueId = "66000acbcfaa5d4ccb97b313";
 
-              const response = await axios.post(
-                "https://pwyfklahtrh.rubideum.net/basic/creditBalanceAuto",
-                { payId, uniqueId, amount: remainingAmount, currency: "RBD" }
-              );
+              // const response = await axios.post(
+              //   "https://pwyfklahtrh.rubideum.net/basic/creditBalanceAuto",
+              //   { payId, uniqueId, amount: remainingAmount, currency: "RBD" }
+              // );
 
-              if (response.data.success === 1) {
-                console.log("Successfully added to payId: RBD004779237");
-                const updatedUser = await user.save();
-                const updatedPackage = await selectedPackage.save();
+              // if (response.data.success === 1) {
+              //   console.log("Successfully added to payId: RBD004779237");
+              const updatedUser = await user.save();
 
-                if (updatedUser && updatedPackage) {
-                  res
-                    .status(200)
-                    .json({ sts: "01", msg: "User verified successfully" });
-                } else {
-                  res.status(400).json({ sts: "00", msg: "User not verified" });
-                }
-              } else {
-                console.log("Failed to add to payId: RBD004779237");
+              if (updatedUser) {
                 res
-                  .status(400)
-                  .json({ sts: "00", msg: "Failed to add to payId" });
+                  .status(200)
+                  .json({ sts: "01", msg: "User verified successfully" });
+              } else {
+                res.status(400).json({ sts: "00", msg: "User not verified" });
               }
+              // } else {
+              //   console.log("Failed to add to payId: RBD004779237");
+              //   res
+              //     .status(400)
+              //     .json({ sts: "00", msg: "Failed to add to payId" });
+              // }
             }
           } else {
             res.status(400).json({
@@ -998,22 +988,15 @@ export const getStats = asyncHandler(async (req, res) => {
       // Count of users
       const countOfUsers = eachPackage.users.length;
 
-      const users = eachPackage.users;
-      let sum = 0;
-      let result = {};
-      for (let user of users) {
-        if (user.unrealisedMonthlyProfit > 0) {
-          sum += user.unrealisedMonthlyProfit;
-        }
-      }
-      result = {
+      const result = {
         packageSlug: eachPackage.packageSlug,
         packageName: eachPackage.packageName,
         memberProfit: eachPackage.memberProfit,
         amount: eachPackage.amount,
         usersCount: countOfUsers,
-        splitAmount: sum,
+        splitAmount: eachPackage.monthlyDivident,
       };
+
       memberProfits.push(result);
     }
 
